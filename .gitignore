@@ -1,0 +1,11 @@
+# Node.js dependencies
+node_modules/
+
+# IDE configuration
+.idea/
+
+# Build directory
+build/
+
+# Environment variable file
+.env
