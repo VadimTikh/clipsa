@@ -18,9 +18,6 @@
     "dev": "nodemon",
     "build": "tsc",
     "fix": "gts fix",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile",
-    "posttest": "npm run lint",
     "start": "node build/src/index.js"
   },
   "dependencies": {
