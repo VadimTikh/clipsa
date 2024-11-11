@@ -127,11 +127,11 @@ type ErcApiConnectServiceUsdRateWithDocName = {
 };
 
 type BafCalculatedProduct = {
-  supplier_name: string,
-  name: string,
-  sku: string,
-  cost_price: number,
-  availability: boolean
+  supplier_name: string;
+  name: string;
+  sku: string;
+  cost_price: number;
+  availability: boolean;
 };
 
 export {

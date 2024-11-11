@@ -1,5 +1,7 @@
 import {Request, Response, NextFunction} from 'express';
-import {getConnection, dbName, collections} from '../lib/mongo'
+import {getConnection, dbName, collections} from '../lib/mongo';
+import {BafCalculatedProduct} from '../types'
+import {WithId} from "mongodb";
 
 const handlers = {
   _auth: (req: Request, res: Response, next: NextFunction) => {
@@ -13,12 +15,11 @@ const handlers = {
 
   baf: {
     products: async (req: Request, res: Response) => {
+      const mongo = await getConnection();
 
-      const mongo = await getConnection()
+      const collection = mongo.db(dbName).collection<WithId<BafCalculatedProduct>>(collections.baf.products);
 
-      const collection = mongo.db(dbName).collection(collections.baf.products)
-
-      const products = await collection.find().toArray()
+      const products = await collection.find({}, { projection: { _id: 0 } }).toArray()
 
       res.status(200).json({data: products});
     },
