@@ -141,7 +141,7 @@ const baf = {
           name: p.gname,
           sku: p.code,
           supplier_name: 'ERC',
-          cost_price: p.ddp === 0 ? p.sprice * usdRate : p.sprice,
+          cost_price: p.ddp === 0 ? Math.round(p.sprice * usdRate) : p.sprice,
           availability: p.whs.some(w => Number(w.q) > 0),
         }));
       };
