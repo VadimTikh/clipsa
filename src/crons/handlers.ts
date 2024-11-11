@@ -6,6 +6,7 @@ import {
   ErcApiContentProduct,
   ErcApiConnectServiceProduct,
   ErcApiConnectServiceUsdRateWithDocName,
+  BafCalculatedProduct,
 } from '../types';
 import {ErcConnectServiceApi} from '../suppliers_api/erc';
 
@@ -110,4 +111,71 @@ const suppliers = {
   },
 };
 
-export {suppliers};
+const baf = {
+
+  calculateProductsToDb: async () => {
+
+    log(`Started baf.calculateProductsToDb...`)
+
+    const mongo = await getConnection();
+    const db = mongo.db(dbName)
+
+    const getProducts = async (): Promise<BafCalculatedProduct[]> => {
+
+      const getProductsErc = async (): Promise<BafCalculatedProduct[]> => {
+        const products = await db.collection<WithId<ErcApiConnectServiceProduct>>(collections.erc.specprice).find().toArray()
+        const rates = await db.collection<WithId<ErcApiConnectServiceUsdRateWithDocName>>(collections.erc.rates).findOne({docName: 'main'})
+
+        const usdRate = rates?.paperwork
+
+        if (!usdRate) throw new Error(`Usd rate is not provided`)
+        if (!products.length) throw new Error(`products are not not provided`)
+
+        return products.map(p => ({
+          name: p.gname,
+          sku: p.code,
+          supplier_name: 'ERC',
+          cost_price: p.sprice,
+          availability: p.whs.some(w => Number(w.q) > 0),
+        }))
+
+      }
+
+      const productsErc = await getProductsErc()
+
+      return [
+        ...productsErc
+      ]
+    };
+
+    const products = await getProducts()
+
+    const bulkOps = products.map(product => ({
+      updateOne: {
+        filter: {
+          sku: product.sku,
+          supplier_name: product.supplier_name
+        },
+        update: {
+          $set: product,
+        },
+        upsert: true,
+      },
+    }));
+
+    const BATCH_SIZE = 500;
+
+    for (let i = 0; i < bulkOps.length; i += BATCH_SIZE) {
+      const batch = bulkOps.slice(i, i + BATCH_SIZE);
+
+      await db.collection<WithId<BafCalculatedProduct>>(collections.baf.products).bulkWrite(batch)
+
+      log(
+        `crons suppliers.erc.parseSpecpriceProductsToDb proceeded: ${i + BATCH_SIZE} of ${bulkOps.length}`,
+      );
+    }
+  },
+
+};
+
+export {suppliers, baf};

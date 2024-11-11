@@ -99,7 +99,7 @@ type ErcApiConnectServiceProduct = {
   whs: {
     id: number;
     q: string;
-  }[]; // Adjust this type based on the structure of the objects inside the `whs` array
+  }[];
   stock: boolean;
   reserve: number;
   quantityinbox: number;
@@ -115,15 +115,23 @@ type ErcApiConnectServiceProduct = {
 
 type ErcApiConnectServiceUsdRate = {
   paperwork: number;
-  сash: number;
+  cash: number;
   setoff: number;
 };
 
 type ErcApiConnectServiceUsdRateWithDocName = {
   paperwork: number;
-  сash: number;
+  cash: number;
   setoff: number;
   docName: 'main';
+};
+
+type BafCalculatedProduct = {
+  supplier_name: string,
+  name: string,
+  sku: string,
+  cost_price: number,
+  availability: boolean
 };
 
 export {
@@ -131,4 +139,5 @@ export {
   ErcApiConnectServiceProduct,
   ErcApiConnectServiceUsdRate,
   ErcApiConnectServiceUsdRateWithDocName,
+  BafCalculatedProduct,
 };
