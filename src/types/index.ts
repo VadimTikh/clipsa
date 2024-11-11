@@ -62,4 +62,73 @@ type ErcApiContentProduct = {
   customBadgeText: string | null;
 };
 
-export {ErcApiContentProduct};
+type ErcApiConnectServiceProduct = {
+  vendorId: string;
+  vendor: string;
+  categoryId: string;
+  category: string;
+  subCategoryId: string;
+  subcategory: string;
+  code: string;
+  gname: string;
+  sprice: number;
+  promoRIC: number;
+  datefrom: string | null;
+  dateto: string | null;
+  ddp: number;
+  vat: number;
+  pic: string;
+  ean: string;
+  bar: string;
+  upc: string;
+  declar: string | null;
+  tnvd: string;
+  cert: string | null;
+  warr: number;
+  warrunit: string;
+  width: number;
+  height: number;
+  depth: number;
+  weight: number;
+  volume: number;
+  RRP_UAH: number;
+  monitor: boolean;
+  serialControl: boolean;
+  isaction: number;
+  country: string;
+  whs: {
+    id: number;
+    q: string;
+  }[]; // Adjust this type based on the structure of the objects inside the `whs` array
+  stock: boolean;
+  reserve: number;
+  quantityinbox: number;
+  isNewWare: boolean;
+  isAllreadyExistWare: boolean;
+  isNotmakingWare: boolean;
+  isTransitU: boolean;
+  isTransitW: boolean;
+  isTransitY: boolean;
+  actions: string;
+  isMarked: boolean;
+};
+
+type ErcApiConnectServiceUsdRate = {
+  paperwork: number;
+  сash: number;
+  setoff: number;
+};
+
+type ErcApiConnectServiceUsdRateWithDocName = {
+  paperwork: number;
+  сash: number;
+  setoff: number;
+  docName: 'main';
+};
+
+export {
+  ErcApiContentProduct,
+  ErcApiConnectServiceProduct,
+  ErcApiConnectServiceUsdRate,
+  ErcApiConnectServiceUsdRateWithDocName,
+};

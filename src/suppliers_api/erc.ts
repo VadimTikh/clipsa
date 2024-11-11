@@ -1,6 +1,58 @@
 import axios from 'axios';
 import {log} from '../lib/log';
-import {ErcApiContentProduct} from '../types';
+import {
+  ErcApiContentProduct,
+  ErcApiConnectServiceProduct,
+  ErcApiConnectServiceUsdRate,
+} from '../types';
+
+class ErcConnectServiceApi {
+  private readonly username;
+  private readonly password;
+
+  private static readonly base_url =
+    'https://connect.erc.ua/connectservice/api';
+
+  private static readonly routes = {
+    specprice: {
+      DoExport: `${this.base_url}/specprice/DoExport`,
+    },
+  };
+
+  constructor(username = 'ruk.oztoptech.ua@gmail.com', password = '1234') {
+    this.username = username;
+    this.password = password;
+  }
+
+  private async makeDoExportRequest<T>(infotype: number) {
+    const url = ErcConnectServiceApi.routes.specprice.DoExport;
+
+    const body = {
+      Email: this.username,
+      Pass: this.password,
+      Infotype: infotype,
+      IsJson: true,
+    };
+
+    const response = await axios.post<T>(url, body);
+
+    return response.data;
+  }
+
+  async getProducts() {
+    const infotype = 6;
+    return await this.makeDoExportRequest<ErcApiConnectServiceProduct[]>(
+      infotype,
+    );
+  }
+
+  async getRates() {
+    const infotype = 7;
+    return await this.makeDoExportRequest<ErcApiConnectServiceUsdRate>(
+      infotype,
+    );
+  }
+}
 
 class ErcContentApi {
   private readonly username;
@@ -38,7 +90,7 @@ class ErcContentApi {
     return data.token;
   }
 
-  async getProducts(limitPerRequest = 200, maxPages = Infinity) {
+  async getProductsContent(limitPerRequest = 200, maxPages = Infinity) {
     const products = [];
 
     const startPage = 1;
@@ -94,4 +146,4 @@ class ErcContentApi {
   }
 }
 
-export {ErcContentApi};
+export {ErcContentApi, ErcConnectServiceApi};
