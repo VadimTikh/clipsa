@@ -7,6 +7,7 @@ import {
   ErcApiConnectServiceProduct,
   ErcApiConnectServiceUsdRateWithDocName,
   BafCalculatedProduct,
+  ContentCalculatedProduct
 } from '../types';
 import {ErcConnectServiceApi} from '../suppliers_api/erc';
 
@@ -119,16 +120,17 @@ const baf = {
     const db = mongo.db(dbName);
 
     const getProducts = async (): Promise<BafCalculatedProduct[]> => {
+
       const getProductsErc = async (): Promise<BafCalculatedProduct[]> => {
         const products = await db
           .collection<
-            WithId<ErcApiConnectServiceProduct>
+            ErcApiConnectServiceProduct
           >(collections.erc.specprice)
           .find()
           .toArray();
         const rates = await db
           .collection<
-            WithId<ErcApiConnectServiceUsdRateWithDocName>
+            ErcApiConnectServiceUsdRateWithDocName
           >(collections.erc.rates)
           .findOne({docName: 'main'});
 
@@ -140,6 +142,7 @@ const baf = {
         return products.map(p => ({
           name: p.gname,
           sku: p.code,
+          id: p.id,
           supplier_name: 'ERC',
           cost_price: p.ddp === 0 ? Math.round(p.sprice * usdRate) : p.sprice,
           availability: p.whs.some(w => Number(w.q) > 0),
@@ -181,5 +184,19 @@ const baf = {
     }
   },
 };
+
+const content = {
+  calculateProductsToDb: async () => {
+    log('Started baf.calculateProductsToDb...');
+
+    const mongo = await getConnection();
+    const db = mongo.db(dbName);
+
+    const getProducts = async (): Promise<ContentCalculatedProduct[]> => {
+      return []
+    }
+
+  }
+}
 
 export {suppliers, baf};

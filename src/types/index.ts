@@ -63,6 +63,7 @@ type ErcApiContentProduct = {
 };
 
 type ErcApiConnectServiceProduct = {
+  id: string;
   vendorId: string;
   vendor: string;
   categoryId: string;
@@ -129,10 +130,22 @@ type ErcApiConnectServiceUsdRateWithDocName = {
 type BafCalculatedProduct = {
   supplier_name: string;
   name: string;
+  id: string;
   sku: string;
   cost_price: number;
   availability: boolean;
 };
+
+type ContentCalculatedProduct = {
+  post_name: string,
+  post_product_id: string,
+  post_product_sku: string,
+  sku: string,
+  cost_price: number,
+  availability: 'В наличии' | 'Нет в наличии' | 'Скрыт',
+  sell_price: number,
+  old_price: number
+}
 
 export {
   ErcApiContentProduct,
@@ -140,4 +153,5 @@ export {
   ErcApiConnectServiceUsdRate,
   ErcApiConnectServiceUsdRateWithDocName,
   BafCalculatedProduct,
+  ContentCalculatedProduct
 };
