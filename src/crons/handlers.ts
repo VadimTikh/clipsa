@@ -7,13 +7,17 @@ import {
   ErcApiConnectServiceProduct,
   ErcApiConnectServiceUsdRateWithDocName,
   BafCalculatedProduct,
-  ContentCalculatedProduct
+  ContentCalculatedProduct, WithUpdatedAt, WithCreatedAt
 } from '../types';
 import {ErcConnectServiceApi} from '../suppliers_api/erc';
+import {erc} from '../lib/handlers'
 
 const suppliers = {
   erc: {
     parseContentProductsToDb: async () => {
+
+      const date = new Date()
+
       const ercContentApi = new ErcContentApi();
 
       const products = await ercContentApi.getProductsContent();
@@ -22,13 +26,21 @@ const suppliers = {
 
       const collection = mongo
         .db(dbName)
-        .collection<WithId<ErcApiContentProduct>>(collections.erc.content);
+        .collection<
+          WithCreatedAt<WithUpdatedAt<ErcApiContentProduct>>
+        >(collections.erc.content);
 
       const bulkOps = products.map(product => ({
         updateOne: {
           filter: {id: product.id},
           update: {
-            $set: product,
+            $set: {
+              ...product,
+              updatedAt: date,
+            },
+            $setOnInsert: {
+              createdAt: date,
+            }
           },
           upsert: true,
         },
@@ -48,6 +60,8 @@ const suppliers = {
     parseSpecpriceProductsToDb: async () => {
       log('crons suppliers.erc.parseSpecpriceProductsToDb started');
 
+      const date = new Date()
+
       const ercContentApi = new ErcConnectServiceApi();
 
       const products = await ercContentApi.getProducts();
@@ -57,14 +71,20 @@ const suppliers = {
       const collection = mongo
         .db(dbName)
         .collection<
-          WithId<ErcApiConnectServiceProduct>
+          WithCreatedAt<WithUpdatedAt<ErcApiConnectServiceProduct>>
         >(collections.erc.specprice);
 
       const bulkOps = products.map(product => ({
         updateOne: {
           filter: {id: product.code},
           update: {
-            $set: product,
+            $set: {
+              ...product,
+              updatedAt: date,
+            },
+            $setOnInsert: {
+              createdAt: date,
+            },
           },
           upsert: true,
         },
@@ -92,12 +112,20 @@ const suppliers = {
       const collection = mongo
         .db(dbName)
         .collection<
-          WithId<ErcApiConnectServiceUsdRateWithDocName>
+          WithUpdatedAt<ErcApiConnectServiceUsdRateWithDocName>
         >(collections.erc.rates);
 
       const {upsertedCount, modifiedCount} = await collection.updateOne(
         {docName: 'main'},
-        {$set: rates},
+        {
+          $set: {
+            ...rates,
+            IsError: rates?.IsError ?? false,
+            ErrorCode: rates?.ErrorCode ?? 0,
+            ResultMessages: rates?.ResultMessages ?? '',
+            updatedAt: new Date(),
+          }
+        },
         {upsert: true},
       );
 
@@ -121,38 +149,76 @@ const baf = {
 
     const getProducts = async (): Promise<BafCalculatedProduct[]> => {
 
+      const getAvailability = (
+        {supplier_name, sku, supplier_availability}:
+          {
+            supplier_name: string,
+            sku: string,
+            supplier_availability: boolean
+          }
+      ) => {
+
+        return supplier_availability
+      }
+
+      const getCostPrice = (
+        {supplier_name, sku, cost_price_usd, usd_rate}:
+          {
+            supplier_name: string,
+            sku: string,
+            cost_price_usd: number,
+            usd_rate: number,
+          }
+      ) => {
+
+        return Number(
+          (cost_price_usd * usd_rate).toFixed(2)
+        )
+      }
+
       const getProductsErc = async (): Promise<BafCalculatedProduct[]> => {
-        const products = await db
-          .collection<
-            ErcApiConnectServiceProduct
-          >(collections.erc.specprice)
-          .find()
-          .toArray();
-        const rates = await db
-          .collection<
-            ErcApiConnectServiceUsdRateWithDocName
-          >(collections.erc.rates)
-          .findOne({docName: 'main'});
 
-        const usdRate = rates?.paperwork;
+        const supplier_name = 'ERC'
 
-        if (!usdRate) throw new Error('Usd rate is not provided');
-        if (!products.length) throw new Error('products are not not provided');
+        const {
+          unifiedProducts, usdRates
+        } = await erc.getUnifiedProducts()
 
-        return products.map(p => ({
-          name: p.gname,
-          sku: p.code,
-          id: p.id,
-          supplier_name: 'ERC',
-          cost_price: p.ddp === 0 ? Math.round(p.sprice * usdRate) : p.sprice,
-          availability: p.whs.some(w => Number(w.q) > 0),
-        }));
-      };
+        if (!usdRates) throw new Error('ERC usdRates are null')
+
+        return unifiedProducts.map(up => {
+
+          const id = String(up.wareProduct.id)
+
+          const sku = up.wareProduct.sku[0].code
+
+          const name = up.wareProduct.title
+
+          const supplier_availability = up.connectServiceProduct.stock
+
+          const cost_price_usd = up.connectServiceProduct.sprice
+
+          const usd_rate = usdRates.paperwork
+
+          return {
+            id,
+            supplier_name,
+            sku,
+            name,
+            cost_price: getCostPrice({
+              supplier_name, sku, cost_price_usd, usd_rate
+            }),
+            availability: getAvailability({
+              supplier_name, sku, supplier_availability
+            })
+          }
+        })
+      }
 
       const productsErc = await getProductsErc();
 
       return [...productsErc];
-    };
+    }
 
     const products = await getProducts();
 

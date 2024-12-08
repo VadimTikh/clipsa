@@ -1,3 +1,11 @@
+type WithCreatedAt<T> = T & {
+  createdAt: Date;
+}
+
+type WithUpdatedAt<T> = T & {
+  updatedAt: Date;
+}
+
 type ErcApiContentProduct = {
   id: number;
   isNewWareErc: boolean;
@@ -118,14 +126,22 @@ type ErcApiConnectServiceUsdRate = {
   paperwork: number;
   cash: number;
   setoff: number;
+  ErrorCode?: number;
+  IsError?: boolean;
+  ResultMessages?: string;
 };
 
-type ErcApiConnectServiceUsdRateWithDocName = {
-  paperwork: number;
-  cash: number;
-  setoff: number;
+type ErcApiConnectServiceUsdRateWithDocName = ErcApiConnectServiceUsdRate & {
   docName: 'main';
 };
+
+type ErcUnifiedProductsResult = {
+  unifiedProducts: {
+    wareProduct: WithCreatedAt<WithUpdatedAt<ErcApiContentProduct>>,
+    connectServiceProduct: WithCreatedAt<WithUpdatedAt<ErcApiConnectServiceProduct>>
+  }[],
+  usdRates: WithUpdatedAt<ErcApiConnectServiceUsdRateWithDocName> | null
+}
 
 type BafCalculatedProduct = {
   supplier_name: string;
@@ -137,9 +153,11 @@ type BafCalculatedProduct = {
 };
 
 type ContentCalculatedProduct = {
-  post_name: string,
-  post_product_id: string,
-  post_product_sku: string,
+  supplier: {
+    name: string,
+    product_id: string,
+    product_sku: string
+  }
   sku: string,
   cost_price: number,
   availability: 'В наличии' | 'Нет в наличии' | 'Скрыт',
@@ -148,10 +166,13 @@ type ContentCalculatedProduct = {
 }
 
 export {
+  WithCreatedAt,
+  WithUpdatedAt,
   ErcApiContentProduct,
   ErcApiConnectServiceProduct,
   ErcApiConnectServiceUsdRate,
   ErcApiConnectServiceUsdRateWithDocName,
+  ErcUnifiedProductsResult,
   BafCalculatedProduct,
   ContentCalculatedProduct
 };
