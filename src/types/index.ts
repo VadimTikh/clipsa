@@ -1,9 +1,58 @@
+import {WithId} from "mongodb";
+
 type WithCreatedAt<T> = T & {
   createdAt: Date;
 }
 
 type WithUpdatedAt<T> = T & {
   updatedAt: Date;
+}
+
+type ParsedUnifiedProduct = {
+  sku: string,
+  title: string,
+  cost_price_uah: number,
+  availability: boolean,
+  rrc_price_uah: number | null,
+  link: string | null,
+  supplier_name: string,
+  createdAt: Date;
+  updatedAt: Date;
+  img_link: string | null;
+  ___connection_stock: {
+    stock_sku: string | null,
+    note: string | null
+  }
+}
+
+type StockParsedProduct = {
+  stock: WithId<StockProduct>,
+  parsing: WithId<ParsedUnifiedProduct>[]
+}
+
+type StockProduct = {
+  sku: string,
+  title: string,
+  cost_price_uah: number,
+  stock: number,
+  createdAt: Date
+}
+
+type SiteClipsaProduct = {
+  stock_sku: string,
+  id: number,
+  title: string,
+  old_price: number,
+  sell_price: number,
+  sell_price_components: {
+    is_using_rrc: boolean,
+    rrc: number | null,
+    cost_price: number,
+    nacenka_formula: number,
+    nacenka_dop: number,
+  },
+  availability: boolean,
+  hidden: boolean
 }
 
 type ErcApiContentProduct = {
@@ -18,7 +67,7 @@ type ErcApiContentProduct = {
   };
   description: string;
   descriptionFull: string | null;
-  sku: {code: string}[]; // Embedded Sku directly as an object
+  sku: { code: string }[]; // Embedded Sku directly as an object
   url: string;
   ercRrcPrice: number;
   oldPrice: number;
@@ -168,6 +217,10 @@ type ContentCalculatedProduct = {
 export {
   WithCreatedAt,
   WithUpdatedAt,
+  ParsedUnifiedProduct,
+  StockProduct,
+  StockParsedProduct,
+  SiteClipsaProduct,
   ErcApiContentProduct,
   ErcApiConnectServiceProduct,
   ErcApiConnectServiceUsdRate,

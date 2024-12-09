@@ -1,3 +1,4 @@
 import {erc} from './erc'
+import {products} from './products'
 
-export {erc}
+export {erc, products}

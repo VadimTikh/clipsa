@@ -23,5 +23,5 @@ cron.schedule('0 */1 * * *', () => {
 // Every 1 hour
 cron.schedule('0 */1 * * *', () => {
   void baf.calculateProductsToDb();
-  log('Cron job baf.calculateProductsToDb started');
+  log('Cron job products.calculateProductsToDb started');
 });

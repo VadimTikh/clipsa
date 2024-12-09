@@ -7,10 +7,13 @@ import {
   ErcApiConnectServiceProduct,
   ErcApiConnectServiceUsdRateWithDocName,
   BafCalculatedProduct,
-  ContentCalculatedProduct, WithUpdatedAt, WithCreatedAt
+  ContentCalculatedProduct, WithUpdatedAt, WithCreatedAt,
+  SiteClipsaProduct,
+  StockParsedProduct,
+  ParsedUnifiedProduct, StockProduct
 } from '../types';
 import {ErcConnectServiceApi} from '../suppliers_api/erc';
-import {erc} from '../lib/handlers'
+import {erc, products as productsGetter} from '../lib/handlers'
 
 const suppliers = {
   erc: {
@@ -136,91 +139,108 @@ const suppliers = {
       log(
         `crons suppliers.erc.parseSpecpriceRateUsdToDb modifiedCount is ${modifiedCount}`,
       );
-    },
+    }
   },
 };
 
+const products = {
+
+  updateUnifiedProducts: async () => {
+
+    const getErcProducts = async (): Promise<ParsedUnifiedProduct[]> => {
+
+      const {
+        unifiedProducts,
+        usdRates
+      } = await erc.getUnifiedProducts()
+
+      return []
+    }
+  }
+
+}
+
 const baf = {
   calculateProductsToDb: async () => {
-    log('Started baf.calculateProductsToDb...');
+    log('Started products.calculateProductsToDb...');
 
     const mongo = await getConnection();
     const db = mongo.db(dbName);
 
     const getProducts = async (): Promise<BafCalculatedProduct[]> => {
 
-      const getAvailability = (
-        {supplier_name, sku, supplier_availability}:
-          {
-            supplier_name: string,
-            sku: string,
-            supplier_availability: boolean
-          }
-      ) => {
+      const getLowestCostSupplier = (p: StockParsedProduct) => {
 
-        return supplier_availability
+        const availableSuppliers = p
+          .parsing
+          .filter(par => par.availability)
+
+        if (!availableSuppliers.length) return null
+
+        return availableSuppliers
+          .reduce((lowest, supplier) => (
+            supplier.cost_price_uah < lowest.cost_price_uah ? supplier : lowest
+          ));
       }
 
-      const getCostPrice = (
-        {supplier_name, sku, cost_price_usd, usd_rate}:
-          {
-            supplier_name: string,
-            sku: string,
-            cost_price_usd: number,
-            usd_rate: number,
-          }
+      const getAvailability = (
+        product: StockParsedProduct, supplier: ParsedUnifiedProduct | null
       ) => {
 
+        return (product.stock.stock > 0 && !!supplier?.availability)
+      }
+
+      const getCostPriceByUah = (
+        product: StockParsedProduct, supplier: ParsedUnifiedProduct | null
+      ) => {
+
+        let cost_price_uah = product.stock.cost_price_uah
+
+        const isStockValid = product.stock.stock > 0
+
+        if (!isStockValid && !!supplier && supplier.availability) {
+
+          cost_price_uah = supplier.cost_price_uah
+        }
+
         return Number(
-          (cost_price_usd * usd_rate).toFixed(2)
+          (cost_price_uah).toFixed(2)
         )
       }
 
-      const getProductsErc = async (): Promise<BafCalculatedProduct[]> => {
+      const products = await productsGetter.getStockParsedProducts()
 
-        const supplier_name = 'ERC'
+      return products
+        .map(p => {
 
-        const {
-          unifiedProducts, usdRates
-        } = await erc.getUnifiedProducts()
+          const supplier = getLowestCostSupplier(p)
 
-        if (!usdRates) throw new Error('ERC usdRates are null')
+          const supplier_name = supplier?.supplier_name ?? ''
 
-        return unifiedProducts.map(up => {
+          const id = String(p.stock._id)
 
-          const id = String(up.wareProduct.id)
+          const sku = p.stock.sku
 
-          const sku = up.wareProduct.sku[0].code
+          const name = p.stock.title
 
-          const name = up.wareProduct.title
+          const cost_price = getCostPriceByUah(p, supplier)
 
-          const supplier_availability = up.connectServiceProduct.stock
-
-          const cost_price_usd = up.connectServiceProduct.sprice
-
-          const usd_rate = usdRates.paperwork
+          const availability = getAvailability(p, supplier)
 
           return {
             id,
-            supplier_name,
-            sku,
+            availability,
+            cost_price,
             name,
-            cost_price: getCostPrice({
-              supplier_name, sku, cost_price_usd, usd_rate
-            }),
-            availability: getAvailability({
-              supplier_name, sku, supplier_availability
-            })
+            sku,
+            supplier_name
           }
         })
-      }
-
-      const productsErc = await getProductsErc();
-
-      return [...productsErc];
     }
 
     const products = await getProducts();
+
+    log(`products.calculateProductsToDb products length is ${products.length}`);
 
     const bulkOps = products.map(product => ({
       updateOne: {
@@ -253,10 +273,23 @@ const baf = {
 
 const content = {
   calculateProductsToDb: async () => {
-    log('Started baf.calculateProductsToDb...');
+    log('Started products.calculateProductsToDb...');
 
     const mongo = await getConnection();
-    const db = mongo.db(dbName);
+
+    const db = mongo
+      .db(dbName)
+
+    const stockCollection = db
+        .collection
+      < SiteClipsaProduct >
+      (
+        collections.products.site_clipsa
+      )
+
+    const stockProducts = await stockCollection
+      .find({})
+      .toArray()
 
     const getProducts = async (): Promise<ContentCalculatedProduct[]> => {
       return []
