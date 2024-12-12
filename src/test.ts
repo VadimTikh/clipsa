@@ -1,12 +1,14 @@
 require('dotenv').config();
-import {erc} from "./lib/handlers";
+import {products} from "./lib/handlers";
 
 const testing = async () => {
   try {
-    const result = await erc.getUnifiedProducts()
+
+    const result = await products.getCrmProducts()
+    console.info('resulting is')
     console.log(result)
   } catch (error) {
-    console.log(error)
+    console.error(error)
   }
 }
 testing()

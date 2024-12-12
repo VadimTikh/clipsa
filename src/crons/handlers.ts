@@ -1,6 +1,6 @@
 import {WithId} from 'mongodb';
 import {ErcContentApi} from '../suppliers_api';
-import {getConnection, dbName, collections} from '../lib/mongo';
+import {getConnection, dbNames, collections} from '../lib/mongo';
 import {log} from '../lib/log';
 import {
   ErcApiContentProduct,
@@ -15,6 +15,7 @@ import {
 import {ErcConnectServiceApi} from '../suppliers_api/erc';
 import {erc, products as productsGetter} from '../lib/handlers'
 
+// Заполнение коллекций сырыми данными от поставщика
 const suppliers = {
   erc: {
     parseContentProductsToDb: async () => {
@@ -23,15 +24,15 @@ const suppliers = {
 
       const ercContentApi = new ErcContentApi();
 
-      const products = await ercContentApi.getProductsContent();
+      const products = await ercContentApi.getProductsContentConcurrent();
 
       const mongo = await getConnection();
 
       const collection = mongo
-        .db(dbName)
+        .db(dbNames.clipsa)
         .collection<
           WithCreatedAt<WithUpdatedAt<ErcApiContentProduct>>
-        >(collections.erc.content);
+        >(collections.clipsaDb.erc.content);
 
       const bulkOps = products.map(product => ({
         updateOne: {
@@ -72,10 +73,10 @@ const suppliers = {
       const mongo = await getConnection();
 
       const collection = mongo
-        .db(dbName)
+        .db(dbNames.clipsa)
         .collection<
           WithCreatedAt<WithUpdatedAt<ErcApiConnectServiceProduct>>
-        >(collections.erc.specprice);
+        >(collections.clipsaDb.erc.specprice);
 
       const bulkOps = products.map(product => ({
         updateOne: {
@@ -113,10 +114,10 @@ const suppliers = {
       const mongo = await getConnection();
 
       const collection = mongo
-        .db(dbName)
+        .db(dbNames.clipsa)
         .collection<
           WithUpdatedAt<ErcApiConnectServiceUsdRateWithDocName>
-        >(collections.erc.rates);
+        >(collections.clipsaDb.erc.rates);
 
       const {upsertedCount, modifiedCount} = await collection.updateOne(
         {docName: 'main'},
@@ -143,29 +144,161 @@ const suppliers = {
   },
 };
 
+// Заполнение коллекций кастомными данными товаров
 const products = {
 
-  updateUnifiedProducts: async () => {
+  updateUnifiedParsedProductsToDb: async () => {
 
-    const getErcProducts = async (): Promise<ParsedUnifiedProduct[]> => {
+    const mongo = await getConnection();
 
-      const {
-        unifiedProducts,
-        usdRates
-      } = await erc.getUnifiedProducts()
+    const db = mongo
+      .db(dbNames.clipsa)
 
-      return []
+    const collectionUnifiedParsedProducts = db
+      .collection<
+        ParsedUnifiedProduct
+      >(collections.clipsaDb.products.parsed_unified);
+
+    const getUnifiedProducts = async (): Promise<ParsedUnifiedProduct[]> => {
+
+      const getErcProducts = async (): Promise<ParsedUnifiedProduct[]> => {
+
+        const supplierName = 'ERC'
+
+        const {
+          unifiedProducts,
+          usdRates
+        } = await erc.getUnifiedProducts()
+
+        const usdRate = usdRates?.paperwork
+
+        if (!usdRate) {
+          throw new Error('ЕРЦ отсутствует курс доллара usdRates.paperwork')
+        }
+
+        return unifiedProducts.map(p => {
+
+          const getCostPriceUah = () => {
+
+            const costPrice = p.connectServiceProduct.sprice
+
+            const isCostPriceInUsd = p.connectServiceProduct.ddp === 0
+
+            const costPriceUah = isCostPriceInUsd ? (
+              costPrice * usdRate
+            ) : (
+              costPrice
+            )
+
+            return Math.round(costPriceUah)
+          }
+
+          const getUpdatedAt = () => {
+
+            return new Date(
+              Math.min(
+                p.wareProduct.updatedAt.getTime(),
+                p.connectServiceProduct.updatedAt.getTime()
+              )
+            )
+          }
+
+          const getCreatedAt = () => {
+
+            return new Date(
+              Math.min(
+                p.wareProduct.createdAt.getTime(),
+                p.connectServiceProduct.createdAt.getTime()
+              )
+            )
+          }
+
+          return {
+            sku: p.connectServiceProduct.code,
+            title: p.wareProduct.title,
+            cost_price_uah: getCostPriceUah(),
+            availability: p.connectServiceProduct.stock,
+            updatedAt: getUpdatedAt(),
+            createdAt: getCreatedAt(),
+            link: p.wareProduct?.url || null,
+            supplier_name: supplierName,
+            img_link: p.wareProduct?.image || null,
+            rrc_price_uah: p?.connectServiceProduct?.RRP_UAH || null,
+            ___connection_stock: {
+              stock_sku: null,
+              note: null
+            }
+          }
+        })
+      }
+
+      const [
+        ercProducts
+      ] = await Promise.all(
+        [
+          getErcProducts()
+        ]
+      );
+
+      return [
+        ...ercProducts
+      ]
     }
-  }
 
+    const unifiedProducts = await getUnifiedProducts()
+
+    log(
+      `products.updateUnifiedParsedProductsToDb unifiedProducts length is ${unifiedProducts.length}`
+    );
+
+    const bulkOps = unifiedProducts.map(product => ({
+      updateOne: {
+        filter: {
+          sku: product.sku,
+          supplier_name: product.supplier_name,
+        },
+        update: {
+          $set: {
+            title: product.title,
+            cost_price_uah: product.cost_price_uah,
+            availability: product.availability,
+            rrc_price_uah: product.rrc_price_uah,
+            link: product.link,
+            updatedAt: product.updatedAt,
+            img_link: product.img_link,
+          },
+          $setOnInsert: {
+            createdAt: product.createdAt,
+            ___connection_stock: product.___connection_stock
+          }
+        },
+        upsert: true,
+      },
+    }));
+
+    const BATCH_SIZE = 500;
+
+    for (let i = 0; i < bulkOps.length; i += BATCH_SIZE) {
+      const batch = bulkOps.slice(i, i + BATCH_SIZE);
+
+      await collectionUnifiedParsedProducts
+        .bulkWrite(batch);
+
+      log(
+        `crons products.updateUnifiedParsedProductsToDb proceeded: ${i + BATCH_SIZE} of ${bulkOps.length}`,
+      );
+    }
+  },
+
+  updateStockProducts
 }
 
 const baf = {
   calculateProductsToDb: async () => {
-    log('Started products.calculateProductsToDb...');
+    log('Started baf.calculateProductsToDb...');
 
     const mongo = await getConnection();
-    const db = mongo.db(dbName);
+    const db = mongo.db(dbNames.clipsa);
 
     const getProducts = async (): Promise<BafCalculatedProduct[]> => {
 
@@ -240,7 +373,7 @@ const baf = {
 
     const products = await getProducts();
 
-    log(`products.calculateProductsToDb products length is ${products.length}`);
+    log(`baf.calculateProductsToDb products length is ${products.length}`);
 
     const bulkOps = products.map(product => ({
       updateOne: {
@@ -261,11 +394,11 @@ const baf = {
       const batch = bulkOps.slice(i, i + BATCH_SIZE);
 
       await db
-        .collection<WithId<BafCalculatedProduct>>(collections.baf.products)
+        .collection<WithId<BafCalculatedProduct>>(collections.clipsaDb.baf.products)
         .bulkWrite(batch);
 
       log(
-        `crons suppliers.erc.parseSpecpriceProductsToDb proceeded: ${i + BATCH_SIZE} of ${bulkOps.length}`,
+        `crons baf.calculateProductsToDb proceeded: ${i + BATCH_SIZE} of ${bulkOps.length}`,
       );
     }
   },
@@ -278,13 +411,13 @@ const content = {
     const mongo = await getConnection();
 
     const db = mongo
-      .db(dbName)
+      .db(dbNames.clipsa)
 
     const stockCollection = db
         .collection
       < SiteClipsaProduct >
       (
-        collections.products.site_clipsa
+        collections.clipsaDb.products.site_clipsa
       )
 
     const stockProducts = await stockCollection
@@ -298,4 +431,4 @@ const content = {
   }
 }
 
-export {suppliers, baf};
+export {suppliers, products, baf};

@@ -1,9 +1,11 @@
-import {collections, dbName, getConnection} from "../mongo";
+import {collections, dbNames, getConnection} from "../mongo";
 import {
   StockParsedProduct,
   StockProduct,
-  ParsedUnifiedProduct
+  ParsedUnifiedProduct,
+  CrmProduct
 } from "../../types";
+import {WithId} from "mongodb";
 
 const products = {
 
@@ -11,12 +13,12 @@ const products = {
 
     const connection = await getConnection();
 
-    const db = connection.db(dbName);
+    const db = connection.db(dbNames.clipsa);
 
     const productsStock = await db
       .collection<StockProduct>
       (
-        collections.products.stock
+        collections.clipsaDb.products.stock
       )
       .find({})
       .toArray()
@@ -24,7 +26,7 @@ const products = {
     const productsSuppliers = await db
       .collection<ParsedUnifiedProduct>
       (
-        collections.products.parsed_unified
+        collections.clipsaDb.products.parsed_unified
       )
       .find({})
       .toArray()
@@ -44,8 +46,44 @@ const products = {
           parsing: foundSuppliersProducts
         }
       })
-  }
+  },
 
+  getCrmProducts: async (): Promise<WithId<CrmProduct>[]> => {
+
+    const connection = await getConnection();
+
+    const db = connection.db(dbNames.crm);
+
+    const productsZeroStock = await db
+      .collection<CrmProduct>
+      (
+        collections.crmDb.products_zero_stock
+      )
+      .find({})
+      .toArray()
+
+    const productsMinusStock = await db
+      .collection<CrmProduct>
+      (
+        collections.crmDb.product_minus_stock
+      )
+      .find({})
+      .toArray()
+
+    const productsPlusStock = await db
+      .collection<CrmProduct>
+      (
+        collections.crmDb.products_plus_stock
+      )
+      .find({})
+      .toArray()
+
+    return [
+      ...productsZeroStock,
+      ...productsMinusStock,
+      ...productsPlusStock
+    ]
+  }
 }
 
 export {products}

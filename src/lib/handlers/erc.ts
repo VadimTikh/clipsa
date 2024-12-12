@@ -1,4 +1,4 @@
-import {collections, dbName, getConnection} from "../mongo";
+import {collections, dbNames, getConnection} from "../mongo";
 import {
   WithCreatedAt,
   WithUpdatedAt,
@@ -12,24 +12,28 @@ const erc = {
   getUnifiedProducts: async (): Promise<ErcUnifiedProductsResult> => {
 
     const mongo = await getConnection();
-    const db = mongo.db(dbName);
+    const db = mongo.db(dbNames.clipsa);
 
     const apiProducts = await db
       .collection<WithCreatedAt<WithUpdatedAt<ErcApiContentProduct>>>
-      (collections.erc.content)
+      (collections.clipsaDb.erc.content)
       .find()
       .toArray();
 
     const apiConnectServiceProducts = await db
       .collection<WithCreatedAt<WithUpdatedAt<ErcApiConnectServiceProduct>>>
-      (collections.erc.specprice)
+      (collections.clipsaDb.erc.specprice)
       .find()
       .toArray();
 
     const usdRates = await db
       .collection<WithUpdatedAt<ErcApiConnectServiceUsdRateWithDocName>>
-      (collections.erc.rates)
+      (collections.clipsaDb.erc.rates)
       .findOne({docName: 'main'});
+
+    if (!usdRates) {
+      throw new Error('ЕРЦ отсутствует курс доллара usdRates')
+    }
 
     const result: ErcUnifiedProductsResult = {
       usdRates: usdRates,

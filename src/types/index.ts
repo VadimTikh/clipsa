@@ -189,7 +189,7 @@ type ErcUnifiedProductsResult = {
     wareProduct: WithCreatedAt<WithUpdatedAt<ErcApiContentProduct>>,
     connectServiceProduct: WithCreatedAt<WithUpdatedAt<ErcApiConnectServiceProduct>>
   }[],
-  usdRates: WithUpdatedAt<ErcApiConnectServiceUsdRateWithDocName> | null
+  usdRates: WithUpdatedAt<ErcApiConnectServiceUsdRateWithDocName>
 }
 
 type BafCalculatedProduct = {
@@ -214,7 +214,14 @@ type ContentCalculatedProduct = {
   old_price: number
 }
 
+type CrmProduct = {
+  sku: string,
+  costPrice: number,
+  stock: number
+}
+
 export {
+  CrmProduct,
   WithCreatedAt,
   WithUpdatedAt,
   ParsedUnifiedProduct,
