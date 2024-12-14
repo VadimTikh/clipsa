@@ -6,14 +6,13 @@ import {
   ConnectionProduct,
   RulePriceClipsa,
   StockProduct,
-  CostAndAvailabilityStockProduct,
   CrmProduct,
   ClipsaProduct,
   ParsedUnifiedProduct,
   ErcConnectServiceProduct,
   ErcConnectServiceUsdRate,
   BafCalculatedProduct,
-  CrmProductOld
+  CrmProductOld, DopNacClipsa
 } from "../../types";
 
 const dbNames = {
@@ -38,13 +37,6 @@ const getCollections = (dbName: string) => ({
         .db(dbName)
         .collection<WithCreatedAt<StockProduct>>
         ('stock_products')
-    ),
-
-    stock_calculated_cp_av: (client: MongoClient) => (
-      client
-        .db(dbName)
-        .collection<WithUpdatedAt<CostAndAvailabilityStockProduct>>
-        ('stock_calculated_cp_av_products')
     ),
 
     site_clipsa: (client: MongoClient) => (
@@ -73,6 +65,13 @@ const getCollections = (dbName: string) => ({
         .db(dbName)
         .collection<RulePriceClipsa>
         ('site_clipsa_price_rules')
+    ),
+
+    dop_nac_clipsa: (client: MongoClient) => (
+      client
+        .db(dbName)
+        .collection<WithUpdatedAt<DopNacClipsa>>
+        ('site_clipsa_dop_nac')
     ),
 
   },

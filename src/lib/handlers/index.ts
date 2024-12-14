@@ -1,4 +1,7 @@
-import {suppliersHandler} from './suppliers'
-import {products} from './products'
+import {crons} from './crons'
 
-export {suppliersHandler, products}
+const handlers = {
+  crons
+}
+
+export {handlers}

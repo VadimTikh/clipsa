@@ -16,6 +16,7 @@
     "lint": "gts lint",
     "clean": "gts clean",
     "dev": "nodemon",
+    "dev_test": "nodemon --config nodemon-test.json",
     "build": "tsc",
     "fix": "gts fix",
     "start": "node build/src/index.js"

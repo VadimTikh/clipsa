@@ -1,14 +1,12 @@
 require('dotenv').config();
-import {products} from "./lib/handlers";
+import {handlers} from './lib/handlers'
 
 const testing = async () => {
   try {
-
-    const result = await products.getCrmProducts()
-    console.info('resulting is')
-    console.log(result)
+    await handlers.crons.suppliers.erc.saveConnectServiceProductsToDb()
   } catch (error) {
     console.error(error)
   }
 }
+
 testing()

@@ -39,7 +39,7 @@ const combine_queries = {
       }
 
     } catch (error) {
-      log.all(`queries.erc.getRawSavedData error: ${JSON.stringify(error)}`);
+      log.all(`combine_queries.getRawSavedData error: ${JSON.stringify(error)}`);
       throw error
     }
 
@@ -81,10 +81,75 @@ const combine_queries = {
       ]
 
     } catch (error) {
-      log.all(`queries.erc.getCrmDividedProducts error: ${JSON.stringify(error)}`);
+      log.all(`combine_queries.getCrmDividedProducts error: ${JSON.stringify(error)}`);
       throw error
     }
 
+  },
+
+  getDataForClipsaProducts: async () => {
+
+    try {
+
+      const stockProducts_P = mongoHandler
+        .by_collections
+        .stock_products
+        .getProducts()
+
+      const crmProducts_P = mongoHandler
+        .by_collections
+        .crm_products
+        .getProducts()
+
+      const parsedUnifiedProducts_P = mongoHandler
+        .by_collections
+        .parsed_unified_products
+        .getProducts()
+
+      const connectionsProducts_P = mongoHandler
+        .by_collections
+        .connection_products
+        .getConnections()
+
+      const clipsaPriceRules_P = mongoHandler
+        .by_collections
+        .site_clipsa_price_rules
+        .getRules()
+
+      const clipsaDopNacenki_P = mongoHandler
+        .by_collections
+        .site_clipsa_dop_nac
+        .getProducts()
+
+      const [
+        stockProducts,
+        crmProducts,
+        connectionsProducts,
+        parsedUnifiedProducts,
+        clipsaPriceRules,
+        clipsaDopNacenki
+      ] = await Promise.all([
+        stockProducts_P,
+        crmProducts_P,
+        connectionsProducts_P,
+        parsedUnifiedProducts_P,
+        clipsaPriceRules_P,
+        clipsaDopNacenki_P
+      ])
+
+      return {
+        stockProducts,
+        crmProducts,
+        connectionsProducts,
+        parsedUnifiedProducts,
+        clipsaPriceRules,
+        clipsaDopNacenki
+      }
+
+    } catch (error) {
+      log.all(`combine_queries.getDataForClipsaProducts error: ${JSON.stringify(error)}`);
+      throw error
+    }
   }
 
 }

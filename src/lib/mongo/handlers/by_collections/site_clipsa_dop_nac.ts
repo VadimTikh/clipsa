@@ -1,10 +1,10 @@
 import {AnyBulkWriteOperation} from 'mongodb'
 import {getConnection} from "../../connection";
 import {collections} from "../../collections";
-import {CostAndAvailabilityStockProduct, DocTypeByCollectionType} from "../../../../types";
+import {DocTypeByCollectionType, DopNacClipsa} from "../../../../types";
 import {log} from "../../../log";
 
-const stock_calculated_cp_av_products = {
+const site_clipsa_dop_nac = {
 
   getProducts: async () => {
 
@@ -12,30 +12,30 @@ const stock_calculated_cp_av_products = {
 
       const client = await getConnection();
 
-      const collection = collections.products.stock_calculated_cp_av(client)
+      const collection = collections.products.dop_nac_clipsa(client)
 
       const products = await collection.find({}).toArray()
 
-      log.dev(`stock_calculated_cp_av_products.getProducts fetched: ${products.length} rules`);
+      log.dev(`site_clipsa_dop_nac.getProducts fetched: ${products.length} products`);
 
       return products;
 
     } catch (error) {
-      log.all(`Ошибка stock_calculated_cp_av_products.getProducts`)
+      log.all(`Ошибка site_clipsa_dop_nac.getProducts`)
       throw error
     }
 
   },
 
-  upsertProducts: async (products: CostAndAvailabilityStockProduct[]) => {
+  upsertProducts: async (products: DopNacClipsa[]) => {
 
     try {
 
-      const currentDate = new Date();
+      const currentDate = new Date()
 
       const client = await getConnection();
 
-      const collection = collections.products.stock_calculated_cp_av(client)
+      const collection = collections.products.dop_nac_clipsa(client)
 
       type DocType = DocTypeByCollectionType<typeof collection>
 
@@ -45,7 +45,7 @@ const stock_calculated_cp_av_products = {
           return {
             updateOne: {
               filter: {
-                sku: product.sku
+                sku: product.sku,
               },
               update: {
                 $set: {
@@ -61,10 +61,10 @@ const stock_calculated_cp_av_products = {
       const {upsertedCount, modifiedCount} =
         await collection.bulkWrite(bulkOps);
 
-      log.dev(`stock_calculated_cp_av_products.upsertProducts upsertedCount: ${upsertedCount}, modifiedCount:${modifiedCount}`)
+      log.dev(`site_clipsa_dop_nac.upsertProducts upsertedCount: ${upsertedCount}, modifiedCount:${modifiedCount}`)
 
     } catch (error) {
-      log.all(`Ошибка stock_calculated_cp_av_products.upsertProducts`)
+      log.all(`Ошибка site_clipsa_dop_nac.upsertProducts`)
       throw error
     }
 
@@ -72,4 +72,4 @@ const stock_calculated_cp_av_products = {
 
 }
 
-export {stock_calculated_cp_av_products}
+export {site_clipsa_dop_nac}

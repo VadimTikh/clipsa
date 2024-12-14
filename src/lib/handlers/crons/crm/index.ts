@@ -1,5 +1,5 @@
-import {mongoHandler} from "../../mongo";
-import {CrmProduct} from "../../../types";
+import {mongoHandler} from "../../../mongo";
+import {CrmProduct} from "../../../../types";
 
 const crm = {
 

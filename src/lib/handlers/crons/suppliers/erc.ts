@@ -1,6 +1,6 @@
-import {ercApiHandler} from "../../suppliers_api";
-import {mongoHandler} from "../../mongo";
-import {log} from "../../log";
+import {ercApiHandler} from "../../../suppliers_api";
+import {mongoHandler} from "../../../mongo";
+import {log} from "../../../log";
 
 const erc = {
 
@@ -11,6 +11,8 @@ const erc = {
       const ercContentApi = new ercApiHandler.ErcContentApi();
 
       const products = await ercContentApi.getProducts();
+
+      log.dev(`saveWareProductsToDb length of products fetched ${products.length} products`);
 
       await mongoHandler
         .by_collections
@@ -30,6 +32,8 @@ const erc = {
       const ercConnectServiceApi = new ercApiHandler.ErcConnectServiceApi();
 
       const products = await ercConnectServiceApi.getProducts();
+
+      log.dev(`saveConnectServiceProductsToDb length of products fetched ${products.length} products`);
 
       await mongoHandler
         .by_collections

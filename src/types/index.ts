@@ -159,6 +159,12 @@ type RulePriceClipsa = {
   value: number
 }
 
+// Доп наценки Клипсы
+type DopNacClipsa = {
+  sku: string,
+  value: number
+}
+
 // Товары в СРМ
 type CrmProduct = {
   sku: string,
@@ -252,6 +258,7 @@ export {
   CrmProductOld,
   ParsedUnifiedProduct,
   RulePriceClipsa,
+  DopNacClipsa,
   CrmProduct,
   StockProduct,
   CostAndAvailabilityStockProduct,

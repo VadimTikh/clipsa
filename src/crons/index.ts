@@ -6,7 +6,7 @@ const loadCrons = (
     !onlyInProduction || process.env.NODE_ENV === 'production';
 
   if (isToLoadCrons) {
-    import('./schedules').then(callback).catch(error => {
+    import('./jobs').then(callback).catch(error => {
       throw new Error(error);
     });
   }
