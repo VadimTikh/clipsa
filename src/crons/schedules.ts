@@ -5,19 +5,19 @@ import {log} from '../lib/log';
 // Every 2 hours
 cron.schedule('0 */2 * * *', () => {
   void suppliers.erc.parseContentProductsToDb();
-  log('Cron job suppliers.erc.parseContentProductsToDb started');
+  log('Cron job suppliers.queries.parseContentProductsToDb started');
 });
 
 // Every 2 hours
 cron.schedule('0 */2 * * *', () => {
   void suppliers.erc.parseSpecpriceProductsToDb();
-  log('Cron job suppliers.erc.parseSpecpriceProductsToDb started');
+  log('Cron job suppliers.queries.parseSpecpriceProductsToDb started');
 });
 
 // Every 1 hour
 cron.schedule('0 */1 * * *', () => {
   void suppliers.erc.parseSpecpriceRateUsdToDb();
-  log('Cron job suppliers.erc.parseSpecpriceProductsToDb started');
+  log('Cron job suppliers.queries.parseSpecpriceProductsToDb started');
 });
 
 // Every 1 hour

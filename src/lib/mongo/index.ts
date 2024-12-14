@@ -1,4 +1,5 @@
 import {getConnection} from './connection';
-import {dbNames, collections} from './db';
+import {collections} from './collections';
+import {mongoHandler} from './handlers';
 
-export {getConnection, dbNames, collections};
+export {getConnection, collections, mongoHandler};

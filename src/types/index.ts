@@ -1,61 +1,16 @@
-import {WithId} from "mongodb";
+import {Collection, WithId} from "mongodb";
 
-type WithCreatedAt<T> = T & {
-  createdAt: Date;
-}
+// Все поля типа становятся опциональными, кроме одного
+// Example
+// type testUpsert = OptionalExceptFor<testUpsert, "sku" | "stock">;
+type OptionalExceptFor<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
 
-type WithUpdatedAt<T> = T & {
-  updatedAt: Date;
-}
+type WithCreatedAt<T> = T & {created_at: Date}
 
-type ParsedUnifiedProduct = {
-  sku: string,
-  title: string,
-  cost_price_uah: number,
-  availability: boolean,
-  rrc_price_uah: number | null,
-  link: string | null,
-  supplier_name: string,
-  createdAt: Date;
-  updatedAt: Date;
-  img_link: string | null;
-  ___connection_stock: {
-    stock_sku: string | null,
-    note: string | null
-  }
-}
+type WithUpdatedAt<T> = T & {updated_at: Date}
 
-type StockParsedProduct = {
-  stock: WithId<StockProduct>,
-  parsing: WithId<ParsedUnifiedProduct>[]
-}
-
-type StockProduct = {
-  sku: string,
-  title: string,
-  cost_price_uah: number,
-  stock: number,
-  createdAt: Date
-}
-
-type SiteClipsaProduct = {
-  stock_sku: string,
-  id: number,
-  title: string,
-  old_price: number,
-  sell_price: number,
-  sell_price_components: {
-    is_using_rrc: boolean,
-    rrc: number | null,
-    cost_price: number,
-    nacenka_formula: number,
-    nacenka_dop: number,
-  },
-  availability: boolean,
-  hidden: boolean
-}
-
-type ErcApiContentProduct = {
+// ЕРЦ - Данные с парсера поставщиков
+type ErcWareProduct = {
   id: number;
   isNewWareErc: boolean;
   lastChangeDate: string;
@@ -119,7 +74,8 @@ type ErcApiContentProduct = {
   customBadgeText: string | null;
 };
 
-type ErcApiConnectServiceProduct = {
+// ЕРЦ - Данные с парсера поставщиков
+type ErcConnectServiceProduct = {
   id: string;
   vendorId: string;
   vendor: string;
@@ -171,7 +127,8 @@ type ErcApiConnectServiceProduct = {
   isMarked: boolean;
 };
 
-type ErcApiConnectServiceUsdRate = {
+// ЕРЦ - Данные с парсера поставщиков
+type ErcConnectServiceUsdRate = {
   paperwork: number;
   cash: number;
   setoff: number;
@@ -180,28 +137,95 @@ type ErcApiConnectServiceUsdRate = {
   ResultMessages?: string;
 };
 
-type ErcApiConnectServiceUsdRateWithDocName = ErcApiConnectServiceUsdRate & {
-  docName: 'main';
-};
+// Спарсенные товары (унифицированные)
+type ParsedUnifiedProduct = {
+  sku: string,
+  title: string,
+  cost_price_uah: number,
+  availability: boolean,
+  rrc: {
+    value: number;
+    is_required: boolean;
+  },
+  link: string | null,
+  supplier_name: string,
+  img_link: string | null;
+}
 
-type ErcUnifiedProductsResult = {
-  unifiedProducts: {
-    wareProduct: WithCreatedAt<WithUpdatedAt<ErcApiContentProduct>>,
-    connectServiceProduct: WithCreatedAt<WithUpdatedAt<ErcApiConnectServiceProduct>>
-  }[],
-  usdRates: WithUpdatedAt<ErcApiConnectServiceUsdRateWithDocName>
+// Правила наценки Клипсы
+type RulePriceClipsa = {
+  cost_price_from: number,
+  cost_price_to: number,
+  value: number
+}
+
+// Товары в СРМ
+type CrmProduct = {
+  sku: string,
+  cost_price: number,
+  stock: number
+}
+
+// Товары на складе
+type StockProduct = {
+  sku: string,
+  title: string
+}
+
+// Себестоимости и наличие товаров на складе
+type CostAndAvailabilityStockProduct = {
+  sku: string,
+  cost_price: number,
+  availability: boolean
+}
+
+// Связи
+type ConnectionProduct = {
+  stock_sku: string,
+  parsed_sku: string,
+  supplier_name: string
+}
+
+// Товары на сайте Клипса
+type ClipsaProduct = {
+  sku: string,
+  old_price: number,
+  sell_price: number,
+  sell_price_components: {
+    cost_price: number,
+    nacenka_formula: number,
+    nacenka_dop: number
+  },
+  rrc: {
+    required: boolean,
+    value: number
+  },
+  availability: boolean,
+  hidden: boolean,
+  suppliers: {
+    supplier_name: string,
+    sku: string
+  }[]
 }
 
 type BafCalculatedProduct = {
+  sku: string;
   supplier_name: string;
   name: string;
   id: string;
-  sku: string;
   cost_price: number;
   availability: boolean;
 };
 
-type ContentCalculatedProduct = {
+// Товары в СРМ (старая разделенная коллекция)
+type CrmProductOld = {
+  sku: string,
+  costPrice: number,
+  stock: number
+}
+
+// старое, но Игорь просил в этом формате
+/*type ContentCalculatedProduct = {
   supplier: {
     name: string,
     product_id: string,
@@ -212,27 +236,26 @@ type ContentCalculatedProduct = {
   availability: 'В наличии' | 'Нет в наличии' | 'Скрыт',
   sell_price: number,
   old_price: number
-}
+}*/
 
-type CrmProduct = {
-  sku: string,
-  costPrice: number,
-  stock: number
-}
+type DocTypeByCollectionType<V> = V extends Collection<infer T> ? T : never;
 
 export {
-  CrmProduct,
+  WithId,
   WithCreatedAt,
   WithUpdatedAt,
+  DocTypeByCollectionType,
+  OptionalExceptFor,
+  ErcWareProduct,
+  ErcConnectServiceProduct,
+  ErcConnectServiceUsdRate,
+  CrmProductOld,
   ParsedUnifiedProduct,
+  RulePriceClipsa,
+  CrmProduct,
   StockProduct,
-  StockParsedProduct,
-  SiteClipsaProduct,
-  ErcApiContentProduct,
-  ErcApiConnectServiceProduct,
-  ErcApiConnectServiceUsdRate,
-  ErcApiConnectServiceUsdRateWithDocName,
-  ErcUnifiedProductsResult,
-  BafCalculatedProduct,
-  ContentCalculatedProduct
+  CostAndAvailabilityStockProduct,
+  ConnectionProduct,
+  ClipsaProduct,
+  BafCalculatedProduct
 };

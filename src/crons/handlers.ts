@@ -1,5 +1,5 @@
 import {WithId} from 'mongodb';
-import {ErcContentApi} from '../suppliers_api';
+import {ErcContentApi} from '../lib/suppliers_api';
 import {getConnection, dbNames, collections} from '../lib/mongo';
 import {log} from '../lib/log';
 import {
@@ -12,7 +12,7 @@ import {
   StockParsedProduct,
   ParsedUnifiedProduct, StockProduct
 } from '../types';
-import {ErcConnectServiceApi} from '../suppliers_api/erc';
+import {ErcConnectServiceApi} from '../lib/suppliers_api/erc';
 import {erc, products as productsGetter} from '../lib/handlers'
 
 // Заполнение коллекций сырыми данными от поставщика
@@ -62,7 +62,7 @@ const suppliers = {
       );
     },
     parseSpecpriceProductsToDb: async () => {
-      log('crons suppliers.erc.parseSpecpriceProductsToDb started');
+      log('crons suppliers.queries.parseSpecpriceProductsToDb started');
 
       const date = new Date()
 
@@ -289,8 +289,6 @@ const products = {
       );
     }
   },
-
-  updateStockProducts
 }
 
 const baf = {

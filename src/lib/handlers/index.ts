@@ -1,4 +1,4 @@
-import {erc} from './erc'
+import {suppliersHandler} from './suppliers'
 import {products} from './products'
 
-export {erc, products}
+export {suppliersHandler, products}
