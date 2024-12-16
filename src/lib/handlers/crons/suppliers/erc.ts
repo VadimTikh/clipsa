@@ -14,10 +14,13 @@ const erc = {
 
       log.dev(`saveWareProductsToDb length of products fetched ${products.length} products`);
 
-      await mongoHandler
-        .by_collections
-        .erc_ware_products
-        .upsertProducts(products)
+      if (products.length) {
+
+        await mongoHandler
+          .by_collections
+          .erc_ware_products
+          .upsertProducts(products)
+      }
 
     } catch (error) {
       log.all(`erc.saveWareProductsToDb error: ${JSON.stringify(error)}`);
@@ -35,10 +38,13 @@ const erc = {
 
       log.dev(`saveConnectServiceProductsToDb length of products fetched ${products.length} products`);
 
-      await mongoHandler
-        .by_collections
-        .erc_connect_service_products
-        .upsertProducts(products)
+      if (products.length) {
+
+        await mongoHandler
+          .by_collections
+          .erc_connect_service_products
+          .upsertProducts(products)
+      }
 
     } catch (error) {
       log.all(`erc.saveConnectServiceProductsToDb error: ${JSON.stringify(error)}`);
@@ -80,14 +86,14 @@ const erc = {
         .parsed_unified_products
         .getProducts({supplier_name: ercApiHandler.ErcUnifiedProductCreator.SUPPLIER_NAME})
 
-      const actualUnifiedProduct = new ercApiHandler
+      const actualUnifiedProducts = new ercApiHandler
         .ErcUnifiedProductCreator(wareProducts, connectServiceProducts, connectServiceUsdRates)
         .getUnifiedProducts()
 
       const missingUnifiedProducts = oldUnifiedProducts
         .filter(old => {
 
-          const isExistInActualUnifiedProducts = actualUnifiedProduct
+          const isExistInActualUnifiedProducts = actualUnifiedProducts
             .some(actual => (
               actual.sku === old.sku
             ))
@@ -103,16 +109,20 @@ const erc = {
         })
 
       if (missingUnifiedProducts.length) {
+
         await mongoHandler
           .by_collections
           .parsed_unified_products
           .upsertProducts(missingUnifiedProducts)
       }
 
-      await mongoHandler
-        .by_collections
-        .parsed_unified_products
-        .upsertProducts(actualUnifiedProduct)
+      if (actualUnifiedProducts.length) {
+
+        await mongoHandler
+          .by_collections
+          .parsed_unified_products
+          .upsertProducts(actualUnifiedProducts)
+      }
 
     } catch (error) {
       log.all(`erc.saveUnifiedProducts error: ${JSON.stringify(error)}`);

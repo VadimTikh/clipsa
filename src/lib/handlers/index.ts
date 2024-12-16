@@ -1,7 +1,8 @@
 import {crons} from './crons'
+import {server} from './server'
 
 const handlers = {
-  crons
+  crons, server
 }
 
 export {handlers}

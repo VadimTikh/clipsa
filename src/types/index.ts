@@ -246,10 +246,22 @@ type CrmProductOld = {
 
 type DocTypeByCollectionType<V> = V extends Collection<infer T> ? T : never;
 
+type IUpdateClipsaDopNacenkaResBody = {
+  sku: string,
+  sell_price: number
+}
+
+type IUpdateClipsaDopNacenkaReqBody = {
+  sku: string,
+  dop_nac: number
+}
+
 export {
   WithId,
   WithCreatedAt,
   WithUpdatedAt,
+  IUpdateClipsaDopNacenkaResBody,
+  IUpdateClipsaDopNacenkaReqBody,
   DocTypeByCollectionType,
   OptionalExceptFor,
   ErcWareProduct,

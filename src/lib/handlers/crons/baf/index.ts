@@ -62,16 +62,21 @@ const baf = {
         })
 
       if (missingBafProducts.length) {
+
         await mongoHandler
           .by_collections
           .baf_products
           .upsertProducts(missingBafProducts)
       }
 
-      await mongoHandler
-        .by_collections
-        .baf_products
-        .upsertProducts(actualBafProducts)
+      if (actualBafProducts.length) {
+
+        await mongoHandler
+          .by_collections
+          .baf_products
+          .upsertProducts(actualBafProducts)
+      }
+
 
     } catch (error) {
       log.all(`baf.saveBafProductsInDb error: ${JSON.stringify(error)}`);

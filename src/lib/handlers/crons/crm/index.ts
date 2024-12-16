@@ -7,7 +7,7 @@ const crm = {
 
     const oldCrmProducts = await mongoHandler.combine_queries.getCrmDividedProducts()
 
-    const crmProductsToUpsert: CrmProduct[]  = oldCrmProducts.map(old => {
+    const crmProductsToUpsert: CrmProduct[] = oldCrmProducts.map(old => {
 
       return {
         sku: old.sku,
@@ -16,9 +16,11 @@ const crm = {
       }
     })
 
-    await mongoHandler.by_collections.crm_products.upsertProducts(crmProductsToUpsert)
-  }
+    if (crmProductsToUpsert.length) {
 
+      await mongoHandler.by_collections.crm_products.upsertProducts(crmProductsToUpsert)
+    }
+  }
 }
 
 export {crm}

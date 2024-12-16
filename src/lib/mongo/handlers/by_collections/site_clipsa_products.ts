@@ -6,6 +6,23 @@ import {log} from "../../../log";
 
 const site_clipsa_products = {
 
+  getProductBySku: async (sku: ClipsaProduct['sku']) => {
+
+    try {
+
+      const client = await getConnection();
+
+      const collection = collections.products.site_clipsa(client)
+
+      return await collection.findOne({sku});
+
+    } catch (error) {
+      log.all(`Ошибка site_clipsa_products.getProductBySku, sku is ${sku}`)
+      throw error
+    }
+
+  },
+
   getProducts: async () => {
 
     try {
@@ -25,6 +42,68 @@ const site_clipsa_products = {
       throw error
     }
 
+  },
+
+  updateProductDopNacBySku: async (
+    sku: ClipsaProduct['sku'],
+    dopNac: ClipsaProduct['sell_price_components']['nacenka_dop']
+  ) => {
+
+    try {
+
+      const client = await getConnection();
+
+      const collection = collections.products.site_clipsa(client)
+
+      await collection.updateOne(
+        {
+          sku
+        },
+        {
+          $set: {
+            "sell_price_components.nacenka_dop": dopNac
+          }
+        },
+        {
+          upsert: false
+        }
+      )
+
+    } catch (error) {
+      log.all(`Ошибка site_clipsa_products.updateProductDopNacBySku for sku: ${sku}, dopNac: ${dopNac}`)
+      throw error
+    }
+  },
+
+  updateProductSellPriceBySku: async (
+    sku: ClipsaProduct['sku'],
+    sellPrice: ClipsaProduct['sell_price']
+  ) => {
+
+    try {
+
+      const client = await getConnection();
+
+      const collection = collections.products.site_clipsa(client)
+
+      await collection.updateOne(
+        {
+          sku
+        },
+        {
+          $set: {
+            sell_price: sellPrice
+          }
+        },
+        {
+          upsert: false
+        }
+      )
+
+    } catch (error) {
+      log.all(`Ошибка site_clipsa_products.updateProductSellPriceBySku for sku: ${sku}, sellPrice: ${sellPrice}`)
+      throw error
+    }
   },
 
   upsertProducts: async (products: ClipsaProduct[]) => {

@@ -63,68 +63,71 @@ const sites = {
 
           const supplier = getBestAvailableSupplier()
 
-          const getAvailabilityAndCostPrice = () => {
-
+          const getAvailabilityAndPriceComponents = () => {
             const result = {
               availability: false,
-              cost_price: 0
-            }
+              cost_price: 0,
+              nacenka_formula: 0,
+              nacenka_dop: 0,
+            };
 
+            // Step 1: Determine cost price and availability from productCrm or supplier
             if (productCrm && productCrm.stock > 0 && productCrm.cost_price > 0) {
-              result.availability = true
-              result.cost_price = productCrm.cost_price
+              result.availability = true;
+              result.cost_price = productCrm.cost_price;
+            } else if (supplier && supplier.availability && supplier.cost_price_uah) {
+              result.availability = true;
+              result.cost_price = supplier.cost_price_uah;
             }
 
-            if (supplier && supplier.availability && supplier.cost_price_uah) {
-              result.availability = true
-              result.cost_price = supplier.cost_price_uah
+            // Step 2: Apply additional markup (dopNacenka)
+            if (dopNacenka && dopNacenka.value) {
+              result.nacenka_dop = dopNacenka.value;
             }
 
-            return result
-          }
+            // Step 3: Exit early if cost price is invalid
+            if (!result.cost_price) {
+              result.availability = false;
+              return result;
+            }
+
+            // Step 4: Check for a matching price rule
+            if (!clipsaPriceRules.length) {
+              result.availability = false;
+              return result;
+            }
+
+            const foundRule = clipsaPriceRules
+              .find(({cost_price_from, cost_price_to}) => {
+                return cost_price_from <= result.cost_price && cost_price_to >= result.cost_price;
+              });
+
+            // Step 5: Set availability and formula based on the rule
+            if (!foundRule || foundRule.value <= 0) {
+              result.availability = false;
+              return result;
+            }
+
+            result.nacenka_formula = foundRule.value;
+
+            // Final return
+            return result;
+          };
 
           const {
             availability,
-            cost_price
-          } = getAvailabilityAndCostPrice()
-
-          const getPriceComponents = () => {
-
-            const result = {
-              nacenka_formula: 0,
-              nacenka_dop: 0
-            }
-
-            if (dopNacenka && dopNacenka.value) {
-              result.nacenka_dop = dopNacenka.value
-            }
-
-            if (cost_price > 0) {
-
-              const foundRule = clipsaPriceRules
-                .find(({cost_price_from, cost_price_to}) => {
-
-                  return cost_price_from >= cost_price && cost_price_to <= cost_price
-                })
-
-              if (foundRule && foundRule.value > 0) {
-                result.nacenka_formula = foundRule.value
-              }
-
-            }
-
-            return result
-          }
-
-          const {nacenka_formula, nacenka_dop} = getPriceComponents()
+            cost_price,
+            nacenka_dop,
+            nacenka_formula
+          } = getAvailabilityAndPriceComponents()
 
           const getSellPrice = () => {
 
             let sell_price: number = 0
 
-            if (cost_price > 0) sell_price += cost_price
+            if (cost_price === 0 || nacenka_formula === 0) return sell_price
 
-            if (nacenka_formula) sell_price += nacenka_formula
+            sell_price += (cost_price + nacenka_formula)
 
             if (nacenka_dop) sell_price += nacenka_dop
 
@@ -141,9 +144,9 @@ const sites = {
 
             let old_price: number = 0
 
-            if (sell_price > 0) {
-              old_price = sell_price / (100 - DISCOUNT_PERCENT)
-            }
+            if (sell_price === 0) return old_price
+
+            old_price = sell_price / (100 - DISCOUNT_PERCENT)
 
             return old_price
           }
@@ -224,10 +227,12 @@ const sites = {
           .upsertProducts(missingClipsaSiteProducts)
       }
 
-      await mongoHandler
-        .by_collections
-        .site_clipsa_products
-        .upsertProducts(actualClipsaSiteProducts)
+      if (actualClipsaSiteProducts.length) {
+        await mongoHandler
+          .by_collections
+          .site_clipsa_products
+          .upsertProducts(actualClipsaSiteProducts)
+      }
 
     } catch (error) {
       log.all(`sites.saveClipsaProductsToDb error: ${JSON.stringify(error)}`);

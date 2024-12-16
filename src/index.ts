@@ -7,6 +7,6 @@ startServer(process.env.PORT, () => {
   console.log(`Clipsa server running on port ${process.env.PORT}`);
 });
 
-loadCrons({onlyInProduction: true}, () => {
+loadCrons({onlyInProduction: false}, () => {
   console.log('Cron jobs started.');
 });

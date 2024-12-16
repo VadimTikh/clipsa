@@ -60,7 +60,7 @@ const parsed_unified_products = {
               },
               update: {
                 $set: {
-                  ...products,
+                  ...product,
                   updated_at: currentDate
                 },
                 $setOnInsert: {

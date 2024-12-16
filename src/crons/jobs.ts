@@ -2,44 +2,53 @@ import cron from 'node-cron';
 import {handlers} from '../lib/handlers';
 import {log} from '../lib/log';
 
-// Every 2 hours
-cron.schedule('0 */2 * * *', () => {
-  void handlers.crons.suppliers.erc.saveWareProductsToDb();
-  log.all('Cron job suppliers.erc.saveWareProductsToDb started');
-});
-
-// Every 2 hours
-cron.schedule('0 */2 * * *', () => {
-  void handlers.crons.suppliers.erc.saveConnectServiceRatesUsdToDb();
-  log.all('Cron jobsuppliers.erc.saveConnectServiceRatesUsdToDb() started');
-});
-
-// Every 1 hour
-cron.schedule('0 */1 * * *', () => {
-  void handlers.crons.suppliers.erc.saveConnectServiceRatesUsdToDb();
-  log.all('Cron job suppliers.erc.saveConnectServiceRatesUsdToDb() started');
-});
-
-// Every 1 hour
+// Every 3 hours
+// Сохранить в БД всю информацию по поставщику ERC
 cron.schedule('0 */3 * * *', () => {
-  void handlers.crons.suppliers.erc.saveUnifiedProducts();
-  log.all('Cron job suppliers.erc.saveUnifiedProducts started');
+
+  handlers.crons.unified.saveErcRawSuppliersDataThenSaveUnifiedProducts()
+    .then(() => {
+      log.all(`unified.saveErcRawSuppliersDataThenSaveUnifiedProducts finished!`)
+    })
+
+  log.all('Cron job unified.saveErcRawSuppliersDataThenSaveUnifiedProducts started');
 });
 
 // Every 1 hour
+// Сохранить в БД информацию со списком товаров от поставщиков
+// Для 1C (Ивану)
 cron.schedule('0 */1 * * *', () => {
-  void handlers.crons.baf.saveBafProductsInDb();
+
+  handlers.crons.baf.saveBafProductsInDb()
+    .then(() => {
+      log.all(`job baf.saveBafProductsInDb finished!`)
+    })
+
   log.all('Cron job baf.saveBafProductsInDb started');
 });
 
 // Every 1 hour
+// Сохранить в БД информацию со списком товаров с ценами и наличием
+// для Клипсы (Игорю)
 cron.schedule('0 */1 * * *', () => {
-  void handlers.crons.sites.saveClipsaProductsToDb();
+
+  handlers.crons.sites.saveClipsaProductsToDb()
+    .then(() => {
+      log.all(`job sites.saveClipsaProductsToDb finished!`)
+    })
+
   log.all('Cron job sites.saveClipsaProductsToDb started');
 });
 
 // Every 10 minutes
+// Сохранить в БД информацию со списком товаров с СРМ с остатками и себестоимостями
+// Из старых коллекций (по остаткам)
 cron.schedule('*/10 * * * *', () => {
-  void handlers.crons.crm.saveCrmProductsToDb();
-  log.all('Cron job sites.saveClipsaProductsToDb started');
+
+  handlers.crons.crm.saveCrmProductsToDb()
+    .then(() => {
+      log.all(`job crm.saveCrmProductsToDb finished!`)
+    })
+
+  log.all('Cron job crm.saveCrmProductsToDb started');
 });

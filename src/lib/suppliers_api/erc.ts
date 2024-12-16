@@ -204,10 +204,12 @@ class ErcUnifiedProductCreator {
 
       const getCostPriceUah = (
         p: {
-          connectServiceProduct: ErcConnectServiceProduct,
+          connectServiceProduct: ErcConnectServiceProduct | undefined,
           wareProduct: ErcWareProduct,
         }
       ) => {
+
+        if (!p.connectServiceProduct) return 0
 
         const costPrice = p.connectServiceProduct.sprice
 
@@ -224,7 +226,7 @@ class ErcUnifiedProductCreator {
 
       const getIsRrcRequired = (
         p: {
-          connectServiceProduct: ErcConnectServiceProduct,
+          connectServiceProduct: ErcConnectServiceProduct | undefined,
           wareProduct: ErcWareProduct,
         }
       ) => {
@@ -248,12 +250,6 @@ class ErcUnifiedProductCreator {
               connectionProduct.code === wareProduct.sku[0].code
             ))
 
-          if (!connectionProduct) {
-            throw new Error(
-              `code ${sku} не найдено в connectServiceProducts`
-            )
-          }
-
           const p = {
             connectServiceProduct: connectionProduct,
             wareProduct: wareProduct
@@ -268,7 +264,7 @@ class ErcUnifiedProductCreator {
             supplier_name: ErcUnifiedProductCreator.SUPPLIER_NAME,
             img_link: p.wareProduct?.image || null,
             rrc: {
-              value: p?.connectServiceProduct?.RRP_UAH | 0,
+              value: p?.connectServiceProduct?.RRP_UAH ?? 0,
               is_required: getIsRrcRequired(p)
             }
           }

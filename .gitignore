@@ -9,3 +9,6 @@ build/
 
 # Environment variable file
 .env
+
+# Test file
+src/test.ts
