@@ -1,5 +1,7 @@
 import {mongoHandler} from "../index";
 import {log} from "../../../log";
+import {getConnection} from "../../connection";
+import {collections} from "../../collections";
 
 const combine_queries = {
 
@@ -39,7 +41,8 @@ const combine_queries = {
       }
 
     } catch (error) {
-      log.all(`combine_queries.getRawSavedData error: ${JSON.stringify(error)}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(`combine_queries.getRawSavedData error: ${errorMessage}`);
       throw error
     }
 
@@ -81,7 +84,8 @@ const combine_queries = {
       ]
 
     } catch (error) {
-      log.all(`combine_queries.getCrmDividedProducts error: ${JSON.stringify(error)}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(`combine_queries.getCrmDividedProducts error: ${errorMessage}`);
       throw error
     }
 
@@ -94,7 +98,7 @@ const combine_queries = {
       const stockProducts_P = mongoHandler
         .by_collections
         .stock_products
-        .getProducts()
+        .getProducts({})
 
       const crmProducts_P = mongoHandler
         .by_collections
@@ -104,12 +108,14 @@ const combine_queries = {
       const parsedUnifiedProducts_P = mongoHandler
         .by_collections
         .parsed_unified_products
-        .getProducts()
+        .getProducts
+        .all()
 
       const connectionsProducts_P = mongoHandler
         .by_collections
         .connection_products
-        .getConnections()
+        .getConnections
+        .all()
 
       const clipsaPriceRules_P = mongoHandler
         .by_collections
@@ -147,11 +153,74 @@ const combine_queries = {
       }
 
     } catch (error) {
-      log.all(`combine_queries.getDataForClipsaProducts error: ${JSON.stringify(error)}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(`combine_queries.getDataForClipsaProducts error: ${errorMessage}`);
+      throw error
+    }
+  },
+
+  getParsedUnifiedProductsNotConnected: async (
+    {page, page_size}: { page: number, page_size: number }
+  ) => {
+
+    try {
+
+      const client = await getConnection();
+
+      const collectionUnifiedProducts = collections
+        .products
+        .parsed_unified(client)
+
+      const collectionConnections = collections
+        .products
+        .connections(client)
+
+      const result = await collectionUnifiedProducts.aggregate([
+        {
+          $lookup: {
+            from: `${collectionConnections.collectionName}`, // The second collection
+            let: { supplier_name: "$supplier_name", sku: "$sku" }, // Fields from Collection1 to compare
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$sup_name", "$$supplier_name"] }, // Match supname with sup_name
+                      { $eq: ["$tov_sku", "$$sku"] } // Match sku with tov_sku
+                    ]
+                  }
+                }
+              }
+            ],
+            as: 'matchedDocs' // Name of the resulting array
+          }
+        },
+        {
+          $match: {
+            matchedDocs: { $eq: [] } // Keep only documents with no matches
+          }
+        },
+        {
+          $skip: skip // Skip documents for pagination
+        },
+        {
+          $limit: limit // Limit the number of documents returned
+        },
+        {
+          $project: {
+            matchedDocs: 0 // Optionally exclude matchedDocs from the output
+          }
+        }
+      ]).toArray();
+
+      console.log(result);
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(`combine_queries.getParsedUnifiedProductsNotConnected: ${errorMessage}`);
       throw error
     }
   }
-
 }
 
 export {combine_queries}

@@ -177,14 +177,6 @@ type StockProduct = {
   sku: string,
   title: string
 }
-
-// Себестоимости и наличие товаров на складе
-type CostAndAvailabilityStockProduct = {
-  sku: string,
-  cost_price: number,
-  availability: boolean
-}
-
 // Связи
 type ConnectionProduct = {
   stock_sku: string,
@@ -273,7 +265,6 @@ export {
   DopNacClipsa,
   CrmProduct,
   StockProduct,
-  CostAndAvailabilityStockProduct,
   ConnectionProduct,
   ClipsaProduct,
   BafCalculatedProduct

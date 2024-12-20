@@ -1,4 +1,4 @@
-import {AnyBulkWriteOperation} from 'mongodb'
+import {AnyBulkWriteOperation, FindOptions} from 'mongodb'
 import {getConnection} from "../../connection";
 import {collections} from "../../collections";
 import {DocTypeByCollectionType, StockProduct} from "../../../../types";
@@ -6,7 +6,13 @@ import {log} from "../../../log";
 
 const stock_products = {
 
-  getProducts: async () => {
+  getProducts: async (
+    {
+      onlySku = false
+    }: {
+      onlySku?: boolean
+    }
+  ) => {
 
     try {
 
@@ -14,14 +20,26 @@ const stock_products = {
 
       const collection = collections.products.stock(client)
 
-      const products = await collection.find({}).toArray()
+      type DocType = DocTypeByCollectionType<typeof collection>
 
-      log.dev(`stock_products.getProducts fetched: ${products.length} rules`);
+      const options: FindOptions<DocType> = {}
+
+      if (onlySku) {
+        options.projection = {
+          _id: 1,
+          sku: 1
+        }
+      }
+
+      const products = await collection.find({}, options).toArray()
+
+      log.dev(`stock_products.getProducts fetched ${products.length} products. onlySku: ${onlySku}`);
 
       return products;
 
     } catch (error) {
-      log.all(`Ошибка stock_products.getProducts`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(`Ошибка stock_products.getProducts, ${errorMessage}. onlySku: ${onlySku}`);
       throw error
     }
 
@@ -64,7 +82,8 @@ const stock_products = {
       log.dev(`stock_products.upsertProducts upsertedCount: ${upsertedCount}, modifiedCount:${modifiedCount}`)
 
     } catch (error) {
-      log.all(`Ошибка stock_products.upsertProducts`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(`Ошибка stock_products.upsertProducts, ${errorMessage}`)
       throw error
     }
 

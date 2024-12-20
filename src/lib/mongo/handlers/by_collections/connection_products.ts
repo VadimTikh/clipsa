@@ -6,24 +6,55 @@ import {log} from "../../../log";
 
 const connection_products = {
 
-  getConnections: async () => {
+  getConnections: {
 
-    try {
+    all: async () => {
 
-      const client = await getConnection();
+      try {
 
-      const collection = collections.products.connections(client);
+        const client = await getConnection();
 
-      const connections = await collection.find({}).toArray()
+        const collection = collections.products.connections(client);
 
-      log.dev(`connection_products.getConnections fetched: ${connections.length} connections`);
+        const connections = await collection.find({}).toArray()
 
-      return connections;
+        log.dev(`connection_products.getConnections.all fetched: ${connections.length} connections`);
 
-    } catch (error) {
-      log.all(`Ошибка connection_products.getConnections`);
-      throw error;
-    }
+        return connections;
+
+      } catch (error) {
+        log.all(`Ошибка connection_products.getConnections.all`);
+        throw error;
+      }
+    },
+
+    bySupplierProducts: async (
+      supplierProducts: {supplier_name: string, parsed_sku: string}[]
+    ) => {
+
+      try {
+
+        const client = await getConnection();
+        const collection = collections.products.connections(client);
+
+        // Build query using $or to match supplier_name and supplier_sku pairs
+        const query = {
+          $or: supplierProducts,
+        };
+
+        // Fetch connections
+        const connections = await collection.find(query).toArray();
+
+        log.dev(`connection_products.getConnections.bySupplierProducts fetched: ${connections.length} connections`);
+        return connections;
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        log.all(`Ошибка connection_products.getConnections.bySupplierProducts: ${errorMessage}`);
+        throw error;
+      }
+    },
+
   },
 
   upsertConnections: async (connections: ConnectionProduct[]) => {
@@ -65,7 +96,8 @@ const connection_products = {
       log.dev(`connection_products.upsertConnections upsertedCount: ${upsertedCount}, modifiedCount:${modifiedCount}`)
 
     } catch (error) {
-      log.all(`Ошибка connection_products.upsertConnections`)
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      log.all(`Ошибка connection_products.upsertConnections, error: ${errorMessage}`)
       throw error
     }
 
@@ -99,7 +131,8 @@ const connection_products = {
       log.dev(`connection_products.deleteConnections deletedCount: ${deletedCount}`);
 
     } catch (error) {
-      log.all(`Ошибка connection_products.deleteConnections`);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      log.all(`Ошибка connection_products.deleteConnections, error: ${errorMessage}`);
       throw error;
     }
 

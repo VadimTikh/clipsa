@@ -6,34 +6,93 @@ import {log} from "../../../log";
 
 const parsed_unified_products = {
 
-  getProducts: async (filter?: {
-    supplier_name?: ParsedUnifiedProduct['supplier_name']
-  }) => {
+  getProducts: {
 
-    try {
+    all: async () => {
 
-      const client = await getConnection();
+      try {
 
-      const collection = collections.products.parsed_unified(client)
+        const client = await getConnection();
 
-      type DocType = DocTypeByCollectionType<typeof collection>
+        const collection = collections.products.parsed_unified(client)
 
-      const query: Partial<DocType> = {};
+        const products = await collection.find({}).toArray()
 
-      if (filter?.supplier_name) {
-        query.supplier_name = filter.supplier_name;
+        log.dev(`parsed_unified_products.getProducts.all fetched: ${products.length} products`);
+
+        return products;
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        log.all(`parsed_unified_products.getProducts.all error: ${errorMessage}`);
+        throw error
       }
 
-      const products = await collection.find(query).toArray()
+    },
 
-      log.dev(`parsed_unified_products.getProducts fetched: ${products.length} products`);
+    bySupplierName: async (
+      supplier_name: ParsedUnifiedProduct['supplier_name']
+    ) => {
 
-      return products;
+      try {
 
-    } catch (error) {
-      log.all(`Ошибка parsed_unified_products.getProducts`)
-      throw error
-    }
+        const client = await getConnection();
+
+        const collection = collections.products.parsed_unified(client)
+
+        type DocType = DocTypeByCollectionType<typeof collection>
+
+        const query: Partial<DocType> = {
+          supplier_name
+        };
+
+        const products = await collection.find(query).toArray()
+
+        log.dev(`parsed_unified_products.getProducts.bySupplierName fetched: ${products.length} products`);
+
+        return products;
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        log.all(`parsed_unified_products.getProducts.bySupplierName error: ${errorMessage}`);
+        throw error
+      }
+
+    },
+
+    withPagination: async ({page = 1, per_page = 100}) => {
+
+      try {
+        const client = await getConnection();
+        const collection = collections.products.parsed_unified(client);
+
+        const skip = (page - 1) * per_page;
+
+        // Count all documents for pagination
+        const totalDocuments = await collection.countDocuments({});
+        const page_count = Math.ceil(totalDocuments / per_page);
+
+        // Fetch the paginated products
+        const products = await collection
+          .find({})
+          .skip(skip)
+          .limit(per_page)
+          .toArray();
+
+        return {
+          data: products,
+          pagination: {
+            page,
+            per_page,
+            page_count,
+          },
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        log.all(`parsed_unified_products.getProductsPagination, page: ${page}, per_page:${per_page}, error: ${errorMessage}`);
+        throw error;
+      }
+    },
 
   },
 
