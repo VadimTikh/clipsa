@@ -6,9 +6,6 @@ import {log} from '../../log'
 
 class DatabaseMongo implements IDatabase {
 
-  constructor() {
-  }
-
   private async getClient(): Promise<MongoClient> {
     return await getConnection()
   }
@@ -17,76 +14,111 @@ class DatabaseMongo implements IDatabase {
     options?: { supplierName?: string }
   ): Promise<UnifiedProduct[]> {
 
-    log.dev(`Getting unified products...`)
+    try {
 
-    const client = await this.getClient()
+      log.dev(`Getting unified products of ${options?.supplierName || 'all suppliers'}...`)
 
-    const collection = collections
-      .products
-      .unified(client)
+      const client = await this.getClient()
 
-    const filter: Filter<UnifiedProduct> = {}
+      const collection = collections
+        .products
+        .unified(client)
 
-    if (options?.supplierName) {
-      filter.supplier_name = options.supplierName
+      const filter: Filter<UnifiedProduct> = {}
+
+      if (options?.supplierName) {
+        filter.supplier_name = options.supplierName
+      }
+
+      return await collection
+        .find(filter)
+        .toArray()
+
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `Получение из монго БД товаров поставщика: ${
+          options?.supplierName || '... всех поставщиков'
+        } прервано с ошибкой ${errorMessage}`
+      )
+      throw error
     }
-
-    return await collection
-      .find(filter)
-      .toArray()
   }
 
   async updateUnifiedProduct(product: UnifiedProduct): Promise<void> {
 
-    log.dev(`Updating unified product with sku ${product.sku}...`)
+    try {
 
-    if (!product?.sku) {
-      throw new Error(`Product not found by SKU ${JSON.stringify(product)}`)
-    }
+      log.dev(`Updating unified product of ${product.supplier_name} with sku ${product.sku}...`)
 
-    const client = await this.getClient()
-
-    const collection = collections
-      .products
-      .unified(client)
-
-    await collection.updateOne(
-      {sku: product.sku},
-      {
-        $set: {
-          rrc_value: product.rrc_value,
-          title: product.title,
-          availability: product.availability,
-          link: product.link,
-          img_link: product.img_link,
-          rrc_is_required: product.rrc_is_required,
-          cost_price_uah: product.cost_price_uah,
-          updated_at: new Date()
-        }
+      if (!product?.sku) {
+        throw new Error(`В товаре не найден sku: ${JSON.stringify(product)}`)
       }
-    )
+
+      const client = await this.getClient()
+
+      const collection = collections
+        .products
+        .unified(client)
+
+      await collection.updateOne(
+        {sku: product.sku},
+        {
+          $set: {
+            rrc_value: product.rrc_value,
+            title: product.title,
+            availability: product.availability,
+            link: product.link,
+            img_link: product.img_link,
+            rrc_is_required: product.rrc_is_required,
+            cost_price_uah: product.cost_price_uah,
+            updated_at: product.updated_at
+          }
+        }
+      )
+
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `Обновление в монго БД товара: ${
+          JSON.stringify(product)
+        } прервано с ошибкой ${errorMessage}`
+      )
+      throw error
+    }
   }
 
   async insertUnifiedProduct(product: UnifiedProduct): Promise<void> {
 
-    log.dev(`Inserting unified product with sku ${product.sku}...`)
+    try {
 
-    const date = new Date();
+      log.dev(`Inserting unified product of ${product.supplier_name} with sku ${product.sku}...`)
 
-    if (!product?.sku) {
-      throw new Error(`Product not found by SKU ${JSON.stringify(product)}`)
+      if (!product?.sku) {
+        throw new Error(`В товаре не найден sku: ${JSON.stringify(product)}`)
+      }
+
+      const client = await this.getClient()
+
+      const collection = collections
+        .products
+        .unified(client)
+
+      await collection.insertOne(product)
+
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `Добавление в монго БД товара: ${
+          JSON.stringify(product)
+        } прервано с ошибкой ${errorMessage}`
+      )
+      throw error
     }
-
-    const client = await this.getClient()
-
-    const collection = collections
-      .products
-      .unified(client)
-
-    await collection.insertOne({
-      ...product,
-      created_at: date,
-      updated_at: date
-    })
   }
 }
+
+export {DatabaseMongo}

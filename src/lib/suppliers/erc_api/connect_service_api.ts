@@ -1,5 +1,6 @@
 import {ErcConnectServiceProduct, ErcConnectServiceUsdRate} from "./types";
 import {axios} from './axios'
+import {log} from "../../log";
 
 class ErcConnectServiceApi {
   private readonly username;
@@ -20,18 +21,31 @@ class ErcConnectServiceApi {
   }
 
   private async makeDoExportRequest<T>(infotype: number) {
-    const url = ErcConnectServiceApi.routes.specprice.DoExport;
 
-    const body = {
-      Email: this.username,
-      Pass: this.password,
-      Infotype: infotype,
-      IsJson: true,
-    };
+    try {
 
-    const response = await axios.post<T>(url, body);
+      const url = ErcConnectServiceApi.routes.specprice.DoExport;
 
-    return response.data;
+      const body = {
+        Email: this.username,
+        Pass: this.password,
+        Infotype: infotype,
+        IsJson: true,
+      };
+
+      const response = await axios.post<T>(url, body);
+
+      return response.data;
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `При запросе makeDoExportRequest с параметрами:\n` +
+        `infotype: ${infotype}\n` +
+        `возникла ошибка:\n${errorMessage}`
+      )
+      throw error
+    }
   }
 
   async getProducts() {

@@ -19,140 +19,180 @@ class SuppliersApiAbstraction {
     }
   ) {
 
-    const fieldsToCheck: (keyof UnifiedProduct)[] = [
-      'title',
-      'rrc_is_required',
-      'rrc_value',
-      'link',
-      'img_link',
-      'availability',
-      'cost_price_uah',
-    ];
+    try {
+      const fieldsToCheck: (keyof UnifiedProduct)[] = [
+        'title',
+        'rrc_is_required',
+        'rrc_value',
+        'link',
+        'img_link',
+        'availability',
+        'cost_price_uah',
+      ];
 
-    return fieldsToCheck.some(field => dbProduct[field] !== apiProduct[field]);
+      return fieldsToCheck
+        .some(field => dbProduct[field] !== apiProduct[field]);
+
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `При сверке абстракцией изменений товаров (между БД и поставщиков) с параметрами:\n` +
+        `dbProduct: ${JSON.stringify(dbProduct)}\n` +
+        `apiProduct: ${JSON.stringify(apiProduct)}\n` +
+        `возникла ошибка:\n${errorMessage}`
+      )
+      throw error
+    }
   }
 
   private async productsFromApiHandler(
-    {supplierName, productsFromApi, database}: {
+    {
+      supplierName,
+      productsFromApi,
+      database
+    }: {
       supplierName: string;
       productsFromApi: UnifiedProduct[];
       database: IDatabase;
     }
   ) {
 
-    const productsFromDb: UnifiedProduct[] = await database
-      .getUnifiedProducts({supplierName})
+    try {
 
-    const productsNew: UnifiedProduct[] = []
-    const productsChanged: UnifiedProduct[] = []
-    const productsNotFound: UnifiedProduct[] = []
+      const productsFromDb: UnifiedProduct[] = await database
+        .getUnifiedProducts({supplierName})
 
-    // Fill arrays New and Changed in supplier API
-    productsFromApi.forEach(productFromApi => {
+      const productsNew: UnifiedProduct[] = []
+      const productsChanged: UnifiedProduct[] = []
+      const productsNotFound: UnifiedProduct[] = []
 
-      const foundInDb = productsFromDb
-        .find(productFromDb => (
-          productFromDb.sku === productFromApi.sku
-        ))
+      // Fill arrays New and Changed in supplier API
+      productsFromApi.forEach(productFromApi => {
 
-      if (!foundInDb) {
-        productsNew.push(productFromApi)
-        return
-      }
+        const foundInDb = productsFromDb
+          .find(productFromDb => (
+            productFromDb.sku === productFromApi.sku
+          ))
 
-      const isProductChanged = this.isProductChanged({
-        dbProduct: foundInDb,
-        apiProduct: productFromApi
+        if (!foundInDb) {
+          productsNew.push(productFromApi)
+          return
+        }
+
+        const isProductChanged = this.isProductChanged({
+          dbProduct: foundInDb,
+          apiProduct: productFromApi
+        })
+
+        if (isProductChanged) {
+          productsChanged.push(productFromApi)
+        }
       })
 
-      if (isProductChanged) {
-        productsChanged.push(productFromApi)
-      }
-    })
+      //Fills array NotFound in supplier API
+      productsFromDb.forEach(productsFromDb => {
 
-    //Fills array NotFound in supplier API
-    productsFromDb.forEach(productsFromDb => {
+        const foundInApi = productsFromApi
+          .find(productFromApi => (
+            productFromApi.sku === productsFromDb.sku
+          ))
 
-      const foundInApi = productsFromApi
-        .find(productFromApi => (
-          productFromApi.sku === productsFromDb.sku
-        ))
-
-      if (!foundInApi) {
-        productsNotFound.push(productsFromDb)
-      }
-    })
-
-    const insertNewProducts = async () => {
-      for (const product of productsNew) {
-        await database.insertUnifiedProduct(product)
-      }
-    }
-
-    const updateChangedProducts = async () => {
-
-      for (const product of productsChanged) {
-        await database.updateUnifiedProduct(product)
-      }
-
-      for (const product of productsNotFound) {
-
-        const productNotAvailable: UnifiedProduct = {
-          ...product,
-          availability: false
+        if (!foundInApi) {
+          productsNotFound.push(productsFromDb)
         }
-        await database.updateUnifiedProduct(productNotAvailable)
+      })
+
+      const insertNewProducts = async () => {
+        for (const product of productsNew) {
+          await database.insertUnifiedProduct(product)
+        }
       }
 
-    }
+      const updateChangedProducts = async () => {
 
-    await Promise.all([
-      insertNewProducts(),
-      updateChangedProducts()
-    ])
+        for (const product of productsChanged) {
+          await database.updateUnifiedProduct(product)
+        }
+
+        for (const product of productsNotFound) {
+
+          const productNotAvailable: UnifiedProduct = {
+            ...product,
+            availability: false
+          }
+          await database.updateUnifiedProduct(productNotAvailable)
+        }
+
+      }
+
+      await Promise.all([
+        insertNewProducts(),
+        updateChangedProducts()
+      ])
+
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `При формировании абстракцией списка на добавление и обновление в БД товаров с параметрами:\n` +
+        `supplierName: ${supplierName}\n` +
+        `productsFromApi: ${JSON.stringify(productsFromApi)}\n` +
+        `database: ${JSON.stringify(database)}\n` +
+        `возникла ошибка:\n${errorMessage}`
+      )
+      throw error
+    }
 
   }
 
   /**
    * Save products from all suppliers to the database.
-   * Returns an array of promises, each corresponding to a supplier's save operation.
+   * Returns an array of promises, each corresponding to a supplier's
+   * (in order that were provided in a constructor first param) save operation.
    * This allows independent tracking of each supplier's operation.
    *
    * @returns {Promise<void>[]} Array of promises (for each supplier)
    */
   public saveProductsToDb() {
 
-    const results: Promise<void>[] = []
+    try {
 
-    for (const supplierApi of this.suppliersApi) {
+      const results: Promise<void>[] = []
 
-      const supplierName = supplierApi.getSupplierName()
+      for (const supplierApi of this.suppliersApi) {
 
-      const database = this.database
+        const supplierName = supplierApi.getSupplierName()
 
-      const save = async () => {
+        const database = this.database
 
-        try {
+        const save = async () => {
 
           const productsFromApi = await supplierApi.getUnifiedProducts();
+
           await this.productsFromApiHandler({
             supplierName,
             productsFromApi,
             database,
           });
-
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          log.all(`Error saving products for supplier ${supplierName}: ${errorMessage}`);
         }
+
+        const result = save()
+
+        results.push(result)
       }
 
-      const result = save()
+      return results
 
-      results.push(result)
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `При фетчинге и сохранении абстракцией товаров в БД\n` +
+        `возникла ошибка:\n${errorMessage}`
+      )
+      throw error
     }
-
-    return results
   }
 }
 

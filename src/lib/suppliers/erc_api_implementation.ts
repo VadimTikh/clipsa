@@ -3,6 +3,7 @@ import {
   SupplierApiImplementation
 } from "../interfaces";
 import {ErcContentApi, ErcConnectServiceApi} from './erc_api'
+import {log} from '../log'
 
 class ErcApiImplementation implements SupplierApiImplementation {
 
@@ -15,111 +16,130 @@ class ErcApiImplementation implements SupplierApiImplementation {
   }
 
   public async getUnifiedProducts(): Promise<UnifiedProduct[]> {
-    // Here will be logic to fetch products from concrete (Erc) supplier
-    // And format the products to the unified products type
 
-    const {
-      ERC_CONTENT_API_USERNAME,
-      ERC_CONTENT_API_PASSWORD,
-      ERC_CONNECT_SERVICE_API_USERNAME,
-      ERC_CONNECT_SERVICE_API_PASSWORD,
-    } = process.env ?? {}
+    try {
 
-    if (!ERC_CONTENT_API_USERNAME || !ERC_CONTENT_API_PASSWORD) {
-      throw new Error(`ERC_CONTENT_API login/password were not found`)
-    }
+      // Here will be logic to fetch products from concrete (Erc) supplier
+      // And format the products to the unified products type
 
-    if (!ERC_CONNECT_SERVICE_API_USERNAME || !ERC_CONNECT_SERVICE_API_PASSWORD) {
-      throw new Error(`ERC_CONNECT_SERVICE_API login/password were not found`)
-    }
+      const {
+        ERC_CONTENT_API_USERNAME,
+        ERC_CONTENT_API_PASSWORD,
+        ERC_CONNECT_SERVICE_API_USERNAME,
+        ERC_CONNECT_SERVICE_API_PASSWORD,
+      } = process.env ?? {}
 
-    const ercContentApi = new ErcContentApi(
-      ERC_CONTENT_API_USERNAME,
-      ERC_CONTENT_API_PASSWORD
-    )
+      if (!ERC_CONTENT_API_USERNAME || !ERC_CONTENT_API_PASSWORD) {
+        throw new Error(`ERC_CONTENT_API login/password were not found`)
+      }
 
-    const ercConnectServiceApi = new ErcConnectServiceApi(
-      ERC_CONNECT_SERVICE_API_USERNAME,
-      ERC_CONNECT_SERVICE_API_PASSWORD
-    )
+      if (!ERC_CONNECT_SERVICE_API_USERNAME || !ERC_CONNECT_SERVICE_API_PASSWORD) {
+        throw new Error(`ERC_CONNECT_SERVICE_API login/password were not found`)
+      }
 
-    const usdRates = await ercConnectServiceApi.getRates()
+      const ercContentApi = new ErcContentApi(
+        ERC_CONTENT_API_USERNAME,
+        ERC_CONTENT_API_PASSWORD
+      )
 
-    if (usdRates?.IsError) {
-      throw new Error(`ERC error fetching USD rates: error code is ${usdRates?.ErrorCode}`)
-    }
+      const ercConnectServiceApi = new ErcConnectServiceApi(
+        ERC_CONNECT_SERVICE_API_USERNAME,
+        ERC_CONNECT_SERVICE_API_PASSWORD
+      )
 
-    const usdRate = usdRates.paperwork
+      const usdRates = await ercConnectServiceApi.getRates()
 
-    if (!usdRate) {
-      throw new Error(`ERC USD rate (paperwork) is not valid: ${usdRate}`)
-    }
+      if (usdRates?.IsError) {
+        throw new Error(`ERC error fetching USD rates: response is ${JSON.stringify(usdRates)}`)
+      }
 
-    const wareRuProducts = await ercContentApi.getProductsRu()
+      const usdRate = usdRates.paperwork
 
-    const connectServiceProducts = await ercConnectServiceApi.getProducts()
+      if (!usdRate) {
+        throw new Error(`ERC USD rate (paperwork) is not valid: ${usdRate}`)
+      }
 
-    if (!wareRuProducts.length) {
-      throw new Error(`ERC wareRuProducts array is empty`)
-    }
+      const wareRuProducts = await ercContentApi.getProductsRu()
 
-    if (!connectServiceProducts.length) {
-      throw new Error(`ERC connectServiceProducts array is empty`)
-    }
+      const connectServiceProducts = await ercConnectServiceApi.getProducts()
 
-    const parsedUnifiedProducts: UnifiedProduct[] = []
+      if (!wareRuProducts.length) {
+        throw new Error(`ERC wareRuProducts array is empty`)
+      }
 
-    wareRuProducts.forEach((wareRuProduct) => {
+      if (!connectServiceProducts.length) {
+        throw new Error(`ERC connectServiceProducts array is empty`)
+      }
 
-      const sku = wareRuProduct?.sku[0]?.code
+      const currentDate = new Date()
 
-      if (!sku) return
+      const parsedUnifiedProducts: UnifiedProduct[] = []
 
-      const foundConnectionServiceProduct = connectServiceProducts
-        .find(connectServiceProduct => (
-          sku === connectServiceProduct?.code
-        ))
+      wareRuProducts.forEach((wareRuProduct) => {
 
-      if (!foundConnectionServiceProduct) return
+        const sku = wareRuProduct?.sku[0]?.code
 
-      const costPrice = foundConnectionServiceProduct?.sprice
+        if (!sku) return
 
-      if (!costPrice) return
+        const foundConnectionServiceProduct = connectServiceProducts
+          .find(connectServiceProduct => (
+            sku === connectServiceProduct?.code
+          ))
 
-      const isCostPriceInUsd = foundConnectionServiceProduct.ddp === 0
+        if (!foundConnectionServiceProduct) return
 
-      const costPriceUah = isCostPriceInUsd ?
-        Math.round(costPrice * usdRate) :
-        costPrice
+        const costPrice = foundConnectionServiceProduct?.sprice
 
-      const isRrcRequired = this.getIsRrcRequired()
+        if (!costPrice) return
 
-      const title = wareRuProduct?.title ?? ''
+        const isCostPriceInUsd = foundConnectionServiceProduct.ddp === 0
 
-      const availability = foundConnectionServiceProduct?.stock ?? false
+        const costPriceUah = isCostPriceInUsd ?
+          Math.round(costPrice * usdRate) :
+          costPrice
 
-      const link = wareRuProduct?.url || null
+        const isRrcRequired = this.getIsRrcRequired()
 
-      const supplierName = this.getSupplierName()
+        const title = wareRuProduct?.title ?? ''
 
-      const imgLink = wareRuProduct?.image || null
+        const availability = foundConnectionServiceProduct?.stock ?? false
 
-      const rrcValue = foundConnectionServiceProduct?.RRP_UAH ?? 0
+        const link = wareRuProduct?.url || null
 
-      parsedUnifiedProducts.push({
-        sku,
-        title,
-        availability,
-        link,
-        img_link: imgLink,
-        cost_price_uah: costPriceUah,
-        rrc_value: rrcValue,
-        rrc_is_required: isRrcRequired,
-        supplier_name: supplierName
+        const supplierName = this.getSupplierName()
+
+        const imgLink = wareRuProduct?.image || null
+
+        const rrcValue = foundConnectionServiceProduct?.RRP_UAH ?? 0
+
+        parsedUnifiedProducts.push({
+          sku,
+          title,
+          availability,
+          link,
+          img_link: imgLink,
+          cost_price_uah: costPriceUah,
+          rrc_value: rrcValue,
+          rrc_is_required: isRrcRequired,
+          supplier_name: supplierName,
+          updated_at: currentDate,
+          created_at: currentDate
+        })
       })
-    })
 
-    return parsedUnifiedProducts
+      return parsedUnifiedProducts
+
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `При фетчинге имплементацией списка товаров от поставщика ${
+          this?.getSupplierName() ?? ''
+        }\n` +
+        `возникла ошибка:\n${errorMessage}`
+      )
+      throw error
+    }
   }
 }
 

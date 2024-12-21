@@ -1,1 +1,1 @@
-export {getConnection} from './getConnection'
+export {DatabaseMongo} from './database_mongo'

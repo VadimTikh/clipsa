@@ -22,83 +22,113 @@ class ErcContentApi {
   }
 
   private async getToken() {
-    const formData = new FormData();
 
-    formData.append('username', this.username);
-    formData.append('password', this.password);
+    try {
 
-    const route = this.routesV1.auth;
+      const formData = new FormData();
 
-    const res = await axios.post(route, formData);
+      formData.append('username', this.username);
+      formData.append('password', this.password);
 
-    const data = res?.data as { token: string };
+      const route = this.routesV1.auth;
 
-    if (!data?.token) throw new Error("Erc can't get api token");
+      const res = await axios.post(route, formData);
 
-    return data.token;
+      const data = res?.data as { token: string };
+
+      if (!data?.token) throw new Error("Erc can't get api token");
+
+      return data.token;
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `При запросе получения токена ErcContentApi возникла ошибка:\n${errorMessage}`
+      )
+      throw error
+    }
   }
 
-  async getProductsRu(limitPerRequest = 500, maxPages = Infinity, concurrency = 5) {
+  async getProductsRu(
+    limitPerRequest = 500,
+    maxPages = Infinity,
+    concurrency = 5
+  ) {
 
-    const products = [];
+    try {
 
-    const startPage = 1;
+      const products = [];
 
-    const token = await this.getToken();
+      const startPage = 1;
 
-    const getRoute = (page: number) =>
-      `${this.routesV1.ware.ru}?limit=${limitPerRequest}&page=${page}`;
+      const token = await this.getToken();
 
-    const options = {
-      headers: {
-        'X-AUTH-TOKEN': token,
-      },
-    };
+      const getRoute = (page: number) =>
+        `${this.routesV1.ware.ru}?limit=${limitPerRequest}&page=${page}`;
 
-    log.dev(`Erc fetching products initial data with page ${startPage}`);
+      const options = {
+        headers: {
+          'X-AUTH-TOKEN': token,
+        },
+      };
 
-    const response = await axios.get(getRoute(startPage), options);
+      log.dev(`Erc fetching products initial data with page ${startPage}`);
 
-    const data = response?.data as {
-      content: ErcWareProduct[];
-      pagination: { total: number };
-    };
+      const response = await axios.get(getRoute(startPage), options);
 
-    products.push(...data.content);
+      const data = response?.data as {
+        content: ErcWareProduct[];
+        pagination: { total: number };
+      };
 
-    const totalProducts = data.pagination.total;
+      products.push(...data.content);
 
-    log.dev(`data.pagination: ${JSON.stringify(data.pagination)}`);
+      const totalProducts = data.pagination.total;
 
-    log.dev(`Erc total products to fetch is ${totalProducts}`);
+      log.dev(`data.pagination: ${JSON.stringify(data.pagination)}`);
 
-    const totalPages = Math.min(
-      Math.ceil(totalProducts / limitPerRequest),
-      maxPages,
-    );
+      log.dev(`Erc total products to fetch is ${totalProducts}`);
 
-    log.dev(`Erc total pages to fetch is ${totalPages}`);
+      const totalPages = Math.min(
+        Math.ceil(totalProducts / limitPerRequest),
+        maxPages,
+      );
 
-    for (let i = startPage + 1; i <= totalPages; i += concurrency) {
-      const currentBatch = [];
-      for (let j = i; j < i + concurrency && j <= totalPages; j++) {
-        log.dev(`Erc preparing fetch for page ${j}`);
-        currentBatch.push(axios.get(getRoute(j), options));
+      log.dev(`Erc total pages to fetch is ${totalPages}`);
+
+      for (let i = startPage + 1; i <= totalPages; i += concurrency) {
+        const currentBatch = [];
+        for (let j = i; j < i + concurrency && j <= totalPages; j++) {
+          log.dev(`Erc preparing fetch for page ${j}`);
+          currentBatch.push(axios.get(getRoute(j), options));
+        }
+
+        log.dev(`Erc fetching batch of pages from ${i} to ${Math.min(i + concurrency - 1, totalPages)}`);
+
+        const batchResponses = await Promise.all(currentBatch);
+
+        for (const batchResponse of batchResponses) {
+          const data = batchResponse?.data as { content: ErcWareProduct[] };
+          products.push(...data.content);
+        }
       }
 
-      log.dev(`Erc fetching batch of pages from ${i} to ${Math.min(i + concurrency - 1, totalPages)}`);
+      log.dev(`Erc total fetched products is ${products.length}`);
 
-      const batchResponses = await Promise.all(currentBatch);
+      return products as ErcWareProduct[];
 
-      for (const batchResponse of batchResponses) {
-        const data = batchResponse?.data as { content: ErcWareProduct[] };
-        products.push(...data.content);
-      }
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `При запросе получения токена списка ру товаров ErcContentApi с параметрами:\n` +
+        `limitPerRequest: ${limitPerRequest}\n` +
+        `maxPages: ${maxPages}\n` +
+        `concurrency: ${concurrency}\n` +
+        `возникла ошибка:\n${errorMessage}`
+      )
+      throw error
     }
-
-    log.dev(`Erc total fetched products is ${products.length}`);
-
-    return products as ErcWareProduct[];
   }
 
 }
