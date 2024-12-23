@@ -123,7 +123,10 @@ class ErcApiImplementation implements SupplierApiImplementation {
           rrc_is_required: isRrcRequired,
           supplier_name: supplierName,
           updated_at: currentDate,
-          created_at: currentDate
+          created_at: currentDate,
+          stock_info: {
+            status: 'pending'
+          }
         })
       })
 

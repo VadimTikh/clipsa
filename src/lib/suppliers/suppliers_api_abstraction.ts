@@ -17,33 +17,20 @@ class SuppliersApiAbstraction {
     {dbProduct, apiProduct}: {
       dbProduct: UnifiedProduct, apiProduct: UnifiedProduct
     }
-  ) {
+  ): boolean {
 
-    try {
-      const fieldsToCheck: (keyof UnifiedProduct)[] = [
-        'title',
-        'rrc_is_required',
-        'rrc_value',
-        'link',
-        'img_link',
-        'availability',
-        'cost_price_uah',
-      ];
+    const fieldsToCheck: (keyof UnifiedProduct)[] = [
+      'title',
+      'rrc_is_required',
+      'rrc_value',
+      'link',
+      'img_link',
+      'availability',
+      'cost_price_uah',
+    ];
 
-      return fieldsToCheck
-        .some(field => dbProduct[field] !== apiProduct[field]);
-
-    } catch (error) {
-
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `При сверке абстракцией изменений товаров (между БД и поставщиков) с параметрами:\n` +
-        `dbProduct: ${JSON.stringify(dbProduct)}\n` +
-        `apiProduct: ${JSON.stringify(apiProduct)}\n` +
-        `возникла ошибка:\n${errorMessage}`
-      )
-      throw error
-    }
+    return fieldsToCheck
+      .some(field => dbProduct[field] !== apiProduct[field]);
   }
 
   private async productsFromApiHandler(
@@ -67,7 +54,7 @@ class SuppliersApiAbstraction {
       const productsChanged: UnifiedProduct[] = []
       const productsNotFound: UnifiedProduct[] = []
 
-      // Fill arrays New and Changed in supplier API
+      // Fills arrays New and Changed in supplier API
       productsFromApi.forEach(productFromApi => {
 
         const foundInDb = productsFromDb
@@ -90,7 +77,7 @@ class SuppliersApiAbstraction {
         }
       })
 
-      //Fills array NotFound in supplier API
+      // Fills array NotFound in supplier API
       productsFromDb.forEach(productsFromDb => {
 
         const foundInApi = productsFromApi
@@ -99,7 +86,13 @@ class SuppliersApiAbstraction {
           ))
 
         if (!foundInApi) {
-          productsNotFound.push(productsFromDb)
+
+          const updatedProduct: UnifiedProduct = {
+            ...productsFromDb,
+            availability: false
+          }
+
+          productsNotFound.push(updatedProduct)
         }
       })
 
@@ -112,16 +105,28 @@ class SuppliersApiAbstraction {
       const updateChangedProducts = async () => {
 
         for (const product of productsChanged) {
-          await database.updateUnifiedProduct(product)
+
+          const updateFields: (keyof UnifiedProduct)[] = [
+            'rrc_value',
+            'title',
+            'availability',
+            'link',
+            'img_link',
+            'rrc_is_required',
+            'cost_price_uah',
+            'updated_at'
+          ]
+
+          await database.updateUnifiedProduct(product, updateFields)
         }
 
         for (const product of productsNotFound) {
 
-          const productNotAvailable: UnifiedProduct = {
-            ...product,
-            availability: false
-          }
-          await database.updateUnifiedProduct(productNotAvailable)
+          const updateFields: (keyof UnifiedProduct)[] = [
+            'availability'
+          ]
+
+          await database.updateUnifiedProduct(product, updateFields)
         }
 
       }

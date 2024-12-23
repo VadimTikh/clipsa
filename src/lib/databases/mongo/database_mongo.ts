@@ -40,13 +40,18 @@ class DatabaseMongo implements IDatabase {
       log.all(
         `Получение из монго БД товаров поставщика: ${
           options?.supplierName || '... всех поставщиков'
-        } прервано с ошибкой ${errorMessage}`
+        } прервано с ошибкой:\n${
+          errorMessage
+        }`
       )
       throw error
     }
   }
 
-  async updateUnifiedProduct(product: UnifiedProduct): Promise<void> {
+  async updateUnifiedProduct(
+    product: UnifiedProduct,
+    updateFields: (keyof UnifiedProduct)[] //string[]
+  ): Promise<void> {
 
     try {
 
@@ -62,7 +67,7 @@ class DatabaseMongo implements IDatabase {
         .products
         .unified(client)
 
-      await collection.updateOne(
+      /*await collection.updateOne(
         {sku: product.sku},
         {
           $set: {
@@ -75,6 +80,29 @@ class DatabaseMongo implements IDatabase {
             cost_price_uah: product.cost_price_uah,
             updated_at: product.updated_at
           }
+        }
+      )*/
+
+
+      const _set: Partial<UnifiedProduct> = {...product};
+
+      const productKeys = Object
+        .keys(product) as (keyof UnifiedProduct)[]
+
+      productKeys.forEach(key => {
+
+        if (!updateFields.includes(key)) {
+          delete _set[key]
+        }
+      })
+
+      await collection.updateOne(
+        {
+          sku: product.sku,
+          supplier_name: product.supplier_name
+        },
+        {
+          $set: _set
         }
       )
 

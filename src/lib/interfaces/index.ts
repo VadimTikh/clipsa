@@ -10,6 +10,10 @@ interface UnifiedProduct {
   img_link: string | null;
   created_at: Date;
   updated_at: Date;
+  stock_info:
+    | { status: 'linked'; stock_sku: string }
+    | { status: 'rejected'; reason: string }
+    | { status: 'pending' };
 }
 
 interface IDatabase {
@@ -25,7 +29,8 @@ interface IDatabase {
   ): Promise<void>;
 
   updateUnifiedProduct(
-    product: UnifiedProduct
+    product: UnifiedProduct,
+    updateFields: (keyof UnifiedProduct)[]
   ): Promise<void>;
 }
 
