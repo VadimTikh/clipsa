@@ -50,7 +50,7 @@ class DatabaseMongo implements IDatabase {
 
   async updateUnifiedProduct(
     product: UnifiedProduct,
-    updateFields: (keyof UnifiedProduct)[] //string[]
+    updateFields: (keyof UnifiedProduct)[]
   ): Promise<void> {
 
     try {
@@ -66,23 +66,6 @@ class DatabaseMongo implements IDatabase {
       const collection = collections
         .products
         .unified(client)
-
-      /*await collection.updateOne(
-        {sku: product.sku},
-        {
-          $set: {
-            rrc_value: product.rrc_value,
-            title: product.title,
-            availability: product.availability,
-            link: product.link,
-            img_link: product.img_link,
-            rrc_is_required: product.rrc_is_required,
-            cost_price_uah: product.cost_price_uah,
-            updated_at: product.updated_at
-          }
-        }
-      )*/
-
 
       const _set: Partial<UnifiedProduct> = {...product};
 

@@ -50,6 +50,10 @@ class SuppliersApiAbstraction {
       const productsFromDb: UnifiedProduct[] = await database
         .getUnifiedProducts({supplierName})
 
+      const dbProductsMap = new Map(
+        productsFromDb.map((product) => [product.sku, product])
+      );
+
       const productsNew: UnifiedProduct[] = []
       const productsChanged: UnifiedProduct[] = []
       const productsNotFound: UnifiedProduct[] = []
@@ -57,13 +61,12 @@ class SuppliersApiAbstraction {
       // Fills arrays New and Changed in supplier API
       productsFromApi.forEach(productFromApi => {
 
-        const foundInDb = productsFromDb
-          .find(productFromDb => (
-            productFromDb.sku === productFromApi.sku
-          ))
+        const foundInDb = dbProductsMap
+          .get(productFromApi.sku);
 
         if (!foundInDb) {
           productsNew.push(productFromApi)
+          dbProductsMap.delete(productFromApi.sku);
           return
         }
 
@@ -72,29 +75,19 @@ class SuppliersApiAbstraction {
           apiProduct: productFromApi
         })
 
-        if (isProductChanged) {
-          productsChanged.push(productFromApi)
-        }
+        if (isProductChanged) productsChanged.push(productFromApi)
+
+        dbProductsMap.delete(productFromApi.sku);
       })
 
       // Fills array NotFound in supplier API
-      productsFromDb.forEach(productsFromDb => {
+      dbProductsMap.forEach((productFromDb) => {
 
-        const foundInApi = productsFromApi
-          .find(productFromApi => (
-            productFromApi.sku === productsFromDb.sku
-          ))
-
-        if (!foundInApi) {
-
-          const updatedProduct: UnifiedProduct = {
-            ...productsFromDb,
-            availability: false
-          }
-
-          productsNotFound.push(updatedProduct)
-        }
-      })
+        productsNotFound.push({
+          ...productFromDb,
+          availability: false,
+        });
+      });
 
       const insertNewProducts = async () => {
         for (const product of productsNew) {
