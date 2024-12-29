@@ -16,6 +16,37 @@ interface UnifiedProduct {
     | { status: 'pending' };
 }
 
+interface clipsaContentProduct {
+  id: string, // Внутренний ID монго бд
+  sku: string, // Артикул с нашего склада
+  title: string, // Название с нашего склада
+  clipsa: {
+    sell_price: number, // Цена продажи на сайте
+    availability: boolean, // Наличие на сайте
+    hidden: boolean, // Видимость на сайте
+  }
+  current_supplier: {
+    supplier_name: string, // Название поставщика
+    supplier_sku: string, // Арт поставщика (для каждого поставщика будем оговаривать этот параметр)
+  }
+}
+
+interface CrmProduct {
+  sku: string,
+  stock: number,
+  costPrice: number,
+}
+
+interface BafCalculatedProduct {
+  sku: string;
+  supplier_name: string;
+  name: string;
+  id: string;
+  cost_price: number;
+  availability: boolean;
+};
+
+
 interface IDatabase {
 
   getUnifiedProducts(
@@ -32,6 +63,8 @@ interface IDatabase {
     product: UnifiedProduct,
     updateFields: (keyof UnifiedProduct)[]
   ): Promise<void>;
+
+  getCrmProducts(): Promise<CrmProduct[]>
 }
 
 interface SupplierApiImplementation {
@@ -41,4 +74,4 @@ interface SupplierApiImplementation {
   getUnifiedProducts(): Promise<UnifiedProduct[]>;
 }
 
-export {SupplierApiImplementation, IDatabase, UnifiedProduct}
+export {SupplierApiImplementation, IDatabase, UnifiedProduct, CrmProduct}

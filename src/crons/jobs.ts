@@ -6,6 +6,7 @@ import {SupplierApiImplementation} from "../lib/interfaces";
 
 // Каждые 4 часа
 // Сохранить в БД актуальную информацию о товарах поставщиков
+// Во время разработки включено каждую минуту
 cron.schedule('* * * * *' /*'0 *!/4 * * *'*/, () => {
 
   const suppliersToSave: SupplierApiImplementation[] = [

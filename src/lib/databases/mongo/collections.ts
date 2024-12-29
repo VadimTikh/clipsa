@@ -1,5 +1,5 @@
 import {MongoClient} from "mongodb";
-import {UnifiedProduct} from '../../interfaces'
+import {UnifiedProduct, CrmProduct} from '../../interfaces'
 
 const dbNames = {
   clipsa: 'Clipsa',
@@ -7,17 +7,38 @@ const dbNames = {
   salesdrive: 'salesdrive'
 }
 
-const getCollections = (dbName: string) => ({
+const getCollections = (clipsaDbName: string) => ({
 
   products: {
 
     unified: (client: MongoClient) => (
       client
-        .db(dbName)
+        .db(clipsaDbName)
         .collection<UnifiedProduct>
         ('products_unified')
-    )
-  }
+    ),
+
+    crmMinusStock: (client: MongoClient) => (
+      client
+        .db(dbNames.salesdrive)
+        .collection<CrmProduct>
+        ('products-minus-stock')
+    ),
+
+    crmPlusStock: (client: MongoClient) => (
+      client
+        .db(dbNames.salesdrive)
+        .collection<CrmProduct>
+        ('products-plus-stock')
+    ),
+
+    crmZeroStock: (client: MongoClient) => (
+      client
+        .db(dbNames.salesdrive)
+        .collection<CrmProduct>
+        ('products-zero-stock')
+    ),
+  },
 
 })
 

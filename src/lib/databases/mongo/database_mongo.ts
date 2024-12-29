@@ -1,6 +1,6 @@
 import {getConnection} from './getConnection';
 import {collections} from "./collections";
-import {IDatabase, UnifiedProduct} from "../../interfaces";
+import {IDatabase, UnifiedProduct, CrmProduct} from "../../interfaces";
 import {MongoClient, Filter} from "mongodb";
 import {log} from '../../log'
 
@@ -129,6 +129,55 @@ class DatabaseMongo implements IDatabase {
       )
       throw error
     }
+  }
+
+  async getCrmProducts(): Promise<CrmProduct[]> {
+
+    try {
+
+      log.dev(`Getting all CRM products...`)
+
+      const client = await this.getClient()
+
+      const collectionMinusStock = collections
+        .products
+        .crmMinusStock(client)
+
+      const collectionPlusStock = collections
+        .products
+        .crmPlusStock(client)
+
+      const collectionZeroStock = collections
+        .products
+        .crmZeroStock(client)
+
+      const [
+        productsMinusStock,
+        productsPlusStock,
+        productsZeroStock,
+      ] = await Promise.all([
+        collectionMinusStock.find().toArray(),
+        collectionPlusStock.find().toArray(),
+        collectionZeroStock.find().toArray()
+      ])
+
+      return [
+        ...productsMinusStock,
+        ...productsPlusStock,
+        ...productsZeroStock
+      ]
+
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `Получение из монго БД товаров СРМ прервано с ошибкой:\n${
+          errorMessage
+        }`
+      )
+      throw error
+    }
+
   }
 }
 
