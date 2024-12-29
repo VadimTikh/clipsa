@@ -1,4 +1,6 @@
-interface UnifiedProduct {
+import {WithId} from "mongodb";
+
+export interface UnifiedProduct {
   sku: string,
   title: string,
   cost_price_uah: number,
@@ -16,7 +18,18 @@ interface UnifiedProduct {
     | { status: 'pending' };
 }
 
-interface clipsaContentProduct {
+export interface StockProduct {
+  sku: string,
+  title: string,
+}
+
+export interface CrmProduct {
+  sku: string,
+  stock: number,
+  costPrice: number,
+}
+
+export interface ContentProduct {
   id: string, // Внутренний ID монго бд
   sku: string, // Артикул с нашего склада
   title: string, // Название с нашего склада
@@ -31,29 +44,36 @@ interface clipsaContentProduct {
   }
 }
 
-interface CrmProduct {
-  sku: string,
-  stock: number,
-  costPrice: number,
-}
-
-interface BafCalculatedProduct {
+export interface BafCalculatedProduct {
   sku: string;
   supplier_name: string;
   name: string;
   id: string;
   cost_price: number;
   availability: boolean;
-};
+}
 
+export interface PriceRule {
+  site: 'Clipsa'
+  cost_price_from: number,
+  cost_price_to: number,
+  nacenka: number
+}
 
-interface IDatabase {
+export interface DopNacenka {
+  site: 'Clipsa'
+  sku: string,
+  dopNacenka: number
+}
+
+export interface IDatabase {
 
   getUnifiedProducts(
     options?: {
-      supplierName?: string
+      supplierName?: string,
+      info_status?: UnifiedProduct['stock_info']['status']
     }
-  ): Promise<UnifiedProduct[]>;
+  ): Promise<WithId<UnifiedProduct>[]>;
 
   insertUnifiedProduct(
     product: UnifiedProduct
@@ -64,14 +84,20 @@ interface IDatabase {
     updateFields: (keyof UnifiedProduct)[]
   ): Promise<void>;
 
-  getCrmProducts(): Promise<CrmProduct[]>
+  getCrmProducts(): Promise<WithId<CrmProduct>[]>
+
+  getStockProducts(): Promise<WithId<StockProduct>[]>
+
+  getPriceRules(options?: {
+    site?: PriceRule['site']
+  }): Promise<WithId<PriceRule>[]>
+
+  getDopNacenki(): Promise<WithId<DopNacenka>[]>
 }
 
-interface SupplierApiImplementation {
+export interface SupplierApiImplementation {
 
   getSupplierName(): string
 
   getUnifiedProducts(): Promise<UnifiedProduct[]>;
 }
-
-export {SupplierApiImplementation, IDatabase, UnifiedProduct, CrmProduct}
