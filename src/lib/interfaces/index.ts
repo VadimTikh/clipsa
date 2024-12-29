@@ -93,6 +93,8 @@ export interface IDatabase {
   }): Promise<WithId<PriceRule>[]>
 
   getDopNacenki(): Promise<WithId<DopNacenka>[]>
+
+  upsertClipsaDopNacenka(dopNacenka: DopNacenka): Promise<void>
 }
 
 export interface SupplierApiImplementation {

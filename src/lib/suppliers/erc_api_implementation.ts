@@ -59,16 +59,16 @@ class ErcApiImplementation implements SupplierApiImplementation {
         throw new Error(`ERC USD rate (paperwork) is not valid: ${usdRate}`)
       }
 
-      const wareRuProducts = await ercContentApi.getProductsRu()
-
       const connectServiceProducts = await ercConnectServiceApi.getProducts()
-
-      if (!wareRuProducts.length) {
-        throw new Error(`ERC wareRuProducts array is empty`)
-      }
 
       if (!connectServiceProducts.length) {
         throw new Error(`ERC connectServiceProducts array is empty`)
+      }
+
+      const wareRuProducts = await ercContentApi.getProductsRu()
+
+      if (!wareRuProducts.length) {
+        throw new Error(`ERC wareRuProducts array is empty`)
       }
 
       const currentDate = new Date()

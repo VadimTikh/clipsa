@@ -274,9 +274,53 @@ const handlers = {
 
         const dop_nac = Number(body.dop_nac);
 
-        const result = await libHandlers
-          .server
-          .update_clipsa_dop_nacenka({sku, dop_nac})
+        await database.upsertClipsaDopNacenka(
+          {
+            site: 'Clipsa',
+            sku,
+            dopNacenka: dop_nac
+          }
+        )
+
+        const [
+          unifiedProducts,
+          crmProducts,
+          priceRules,
+          dopNacenki
+        ] = await Promise.all([
+          database.getUnifiedProducts({info_status: 'linked'}),
+          database.getCrmProducts(),
+          database.getPriceRules({site: 'Clipsa'}),
+          database.getDopNacenki()
+        ])
+
+        const bestAvailableUnifiedProduct = getBestAvailableUnifiedProduct(
+          {
+            stockSku: sku,
+            unifiedProducts
+          }
+        )
+
+        const {costPrice} = getClipsaAvailabilityAndCostPrice(
+          {
+            stockSku: sku,
+            crmProducts,
+            bestAvailableUnifiedProduct
+          }
+        )
+
+        const sellPrice = getClipsaSellPrice(
+          {
+            stockSku: sku,
+            dopNacenki,
+            priceRules,
+            costPrice
+          }
+        )
+
+        const result = {
+          sku, price: sellPrice
+        }
 
         res.status(200).json({result});
 

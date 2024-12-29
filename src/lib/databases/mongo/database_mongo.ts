@@ -280,6 +280,45 @@ class DatabaseMongo implements IDatabase {
       throw error
     }
   }
+
+  async upsertClipsaDopNacenka(dopNacenka: DopNacenka): Promise<void> {
+
+    try {
+
+      log.dev(`Upserting dop nacenka ${JSON.stringify(dopNacenka)}...`)
+
+      const client = await this.getClient()
+
+      const collection = collections
+        .products
+        .dopNacenki(client)
+
+      await collection.updateOne(
+        {
+          site: dopNacenka.site,
+          sku: dopNacenka.sku,
+        },
+        {
+          $set: {
+            dopNacenka: dopNacenka.dopNacenka
+          }
+        },
+        {
+          upsert: true
+        }
+      )
+
+    } catch (error) {
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      log.all(
+        `Обновление в монго БД доп наценки: ${
+          JSON.stringify(dopNacenka)
+        } прервано с ошибкой ${errorMessage}`
+      )
+      throw error
+    }
+  }
 }
 
 export {DatabaseMongo}

@@ -103,7 +103,7 @@ class ErcContentApi {
           currentBatch.push(axios.get(getRoute(j), options));
         }
 
-        log.dev(`Erc fetching batch of pages from ${i} to ${Math.min(i + concurrency - 1, totalPages)}`);
+        log.dev(`Erc fetching batch of pages from ${i} to ${Math.min(i + concurrency - 1, totalPages)} of total ${totalPages}`);
 
         const batchResponses = await Promise.all(currentBatch);
 
@@ -113,7 +113,7 @@ class ErcContentApi {
         }
       }
 
-      log.dev(`Erc total fetched products is ${products.length}`);
+      log.dev(`Erc total pages fetched is ${totalPages}, total fetched products is ${products.length}`);
 
       return products as ErcWareProduct[];
 
