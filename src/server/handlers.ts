@@ -134,6 +134,8 @@ const getClipsaSellPrice = (
   // Если правило не найдено
   const baseNacenkaPercent = 0.25
 
+  sellPrice += costPrice
+
   sellPrice += (priceRule?.nacenka ?? (costPrice * baseNacenkaPercent))
 
   sellPrice += (dopNacenka?.dopNacenka ?? 0)
@@ -250,6 +252,9 @@ const handlers = {
             )
           })
 
+        log.dev(
+          `api/content/products respond data length is ${products.length}`
+        )
         res.status(200).json({data: products});
       } catch (error) {
 
