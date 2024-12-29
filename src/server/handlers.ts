@@ -1,6 +1,12 @@
 import {NextFunction, Request, Response} from 'express';
 import {
-  ContentProduct, UnifiedProduct, StockProduct, CrmProduct, PriceRule, DopNacenka
+  ContentProduct,
+  UnifiedProduct,
+  StockProduct,
+  CrmProduct,
+  PriceRule,
+  DopNacenka,
+  BafCalculatedProduct
 } from '../lib/interfaces';
 import {DatabaseMongo} from '../lib/databases';
 import {log} from "../lib/log";
@@ -150,7 +156,24 @@ const handlers = {
 
       try {
 
-        const products = []
+        const products: BafCalculatedProduct[] = []
+
+        const unifiedProducts = await database.getUnifiedProducts()
+
+        unifiedProducts
+          .forEach(unifiedProduct => {
+
+            const sku = unifiedProduct.sku
+            const supplier_name = unifiedProduct.supplier_name
+            const name = unifiedProduct.title
+            const id = String(unifiedProduct._id)
+            const cost_price = unifiedProduct.cost_price_uah
+            const availability = unifiedProduct.availability
+
+            products.push(
+              {sku, supplier_name, name, id, cost_price, availability}
+            )
+          })
 
         res.status(200).json({data: products});
       } catch (error) {
