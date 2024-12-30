@@ -12,3 +12,6 @@ build/
 
 # Test file
 src/test.ts
+
+# Template files
+src_old
