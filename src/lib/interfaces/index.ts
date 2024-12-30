@@ -33,8 +33,10 @@ export interface ContentProduct {
   id: string, // Внутренний ID монго бд
   sku: string, // Артикул с нашего склада
   title: string, // Название с нашего склада
+  cost_price: number, // Либо от поставщика, либо с СРМ
   clipsa: {
     sell_price: number, // Цена продажи на сайте
+    old_price: number // Старая цена (+ 25%)
     availability: boolean, // Наличие на сайте
     hidden: boolean, // Видимость на сайте
   }

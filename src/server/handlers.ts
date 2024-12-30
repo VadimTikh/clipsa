@@ -1,147 +1,18 @@
 import {NextFunction, Request, Response} from 'express';
 import {
   ContentProduct,
-  UnifiedProduct,
-  StockProduct,
-  CrmProduct,
-  PriceRule,
-  DopNacenka,
   BafCalculatedProduct
 } from '../lib/interfaces';
 import {DatabaseMongo} from '../lib/databases';
+import {
+  getClipsaSellPrice,
+  getClipsaAvailabilityAndCostPrice,
+  getBestAvailableUnifiedProduct,
+  getClipsaOldPrice
+} from '../lib/utils'
 import {log} from "../lib/log";
 
 const database = new DatabaseMongo();
-
-const getBestAvailableUnifiedProduct = (
-  {stockSku, unifiedProducts}:
-    {
-      stockSku: StockProduct['sku'],
-      unifiedProducts: UnifiedProduct[]
-    }
-): UnifiedProduct | null => {
-
-  const linkedUnifiedProducts = unifiedProducts
-    .filter(unifiedProduct => (
-      unifiedProduct.stock_info.status === 'linked' &&
-      unifiedProduct.stock_info.stock_sku === stockSku
-    ))
-
-  if (!linkedUnifiedProducts.length) return null
-
-  const availableUnifiedProducts = linkedUnifiedProducts
-    .filter(unifiedProduct => (
-      unifiedProduct.availability
-    ))
-
-  if (!availableUnifiedProducts.length) return null
-
-  // Lowest cost price unified product
-  return availableUnifiedProducts
-    .reduce((
-      foundBestProduct,
-      currentProduct
-    ) => (
-      currentProduct.cost_price_uah < foundBestProduct.cost_price_uah ?
-        currentProduct :
-        foundBestProduct
-    ));
-
-}
-
-const getClipsaAvailabilityAndCostPrice = (
-  {stockSku, bestAvailableUnifiedProduct, crmProducts}:
-    {
-      stockSku: StockProduct['sku'],
-      crmProducts: CrmProduct[],
-      bestAvailableUnifiedProduct: UnifiedProduct | null
-    }
-): { availability: boolean, costPrice: number } => {
-
-  const crmProduct = crmProducts.find(product => (
-    product.sku === stockSku
-  ))
-
-  const isCrmProductAvailable =
-    crmProduct &&
-    crmProduct.stock > 0 &&
-    crmProduct.costPrice > 0
-
-  const isUnifiedProductAvailable =
-    bestAvailableUnifiedProduct &&
-    bestAvailableUnifiedProduct.availability &&
-    bestAvailableUnifiedProduct.cost_price_uah > 0
-
-  // When both are available
-  if (isCrmProductAvailable && isUnifiedProductAvailable) {
-    // Choose the cheapest price
-    return {
-      availability: true,
-      costPrice: Math.min(crmProduct.costPrice, bestAvailableUnifiedProduct.cost_price_uah)
-    }
-  }
-
-  // If only CRM product available
-  if (isCrmProductAvailable) {
-    return {
-      availability: true,
-      costPrice: crmProduct.costPrice
-    }
-  }
-
-  // If only Unified product available
-  if (isUnifiedProductAvailable) {
-    return {
-      availability: true,
-      costPrice: bestAvailableUnifiedProduct.cost_price_uah
-    }
-  }
-
-  // If neither product available, return defaults
-  return {
-    availability: false,
-    costPrice: crmProduct?.costPrice ?? bestAvailableUnifiedProduct?.cost_price_uah ?? 0
-  }
-}
-
-const getClipsaSellPrice = (
-  {stockSku, costPrice, priceRules, dopNacenki}:
-    {
-      stockSku: string,
-      costPrice: number,
-      priceRules: PriceRule[],
-      dopNacenki: DopNacenka[]
-    }
-): number => {
-
-  let sellPrice = 0
-
-  if (costPrice === 0) return sellPrice;
-
-  const priceRule = priceRules
-    .find(doc => (
-      doc.site === 'Clipsa' &&
-      doc.cost_price_from <= costPrice &&
-      doc.cost_price_to >= costPrice
-    ))
-
-  const dopNacenka = dopNacenki
-    .find(doc => (
-      doc.site === 'Clipsa' &&
-      doc.sku === stockSku
-    ))
-
-  // Если правило не найдено
-  const baseNacenkaPercent = 0.25
-
-  sellPrice += costPrice
-
-  sellPrice += (priceRule?.nacenka ?? (costPrice * baseNacenkaPercent))
-
-  sellPrice += (dopNacenka?.dopNacenka ?? 0)
-
-  return Math.ceil(sellPrice)
-}
 
 const handlers = {
   _auth: (req: Request, res: Response, next: NextFunction) => {
@@ -188,6 +59,12 @@ const handlers = {
   },
 
   content: {
+    /*
+      1. Себестоимость может быть 0, если товар не найден ни  у поставщика ни в СРМ.
+      2. Цена продажи может быть 0, если нет себестоимости
+      3. Наличие false, если нет себестоимости
+      4. Правила наценки используются с техномикса (пока что хард-кодены в бд). Если вдруг не найдено правило наценки, будем использоваться дефолтная: 25%
+     */
     products: async (req: Request, res: Response) => {
 
       try {
@@ -237,18 +114,20 @@ const handlers = {
             const id = String(stockProduct._id)
             const sku = stockSku
             const title = stockProduct.title
+            const cost_price = costPrice
+            const clipsa = {
+              sell_price: sellPrice,
+              old_price: getClipsaOldPrice(sellPrice),
+              availability: availability,
+              hidden: false,
+            }
             const current_supplier = {
               supplier_name: bestAvailableUnifiedProduct?.supplier_name ?? '',
               supplier_sku: bestAvailableUnifiedProduct?.sku ?? ''
             }
-            const clipsa = {
-              hidden: false,
-              availability: availability,
-              sell_price: sellPrice
-            }
 
             products.push(
-              {id, sku, title, current_supplier, clipsa}
+              {id, sku, title, cost_price, clipsa, current_supplier}
             )
           })
 
