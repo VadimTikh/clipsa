@@ -14,4 +14,4 @@ build/
 src/test.ts
 
 # Template files
-src_old
+src_old/
