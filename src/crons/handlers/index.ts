@@ -3,8 +3,6 @@ import {log} from "../../lib/log";
 import {SupplierApiImplementation} from "../../lib/interfaces";
 import {ErcApiImplementation} from "../../lib/suppliers";
 
-type UpsertProductsToSalesdriveParams = {}
-
 const handlers = {
 
   saveToMongoUnifiedProducts: () => {
@@ -32,12 +30,6 @@ const handlers = {
         suppliersToSave, onSuccessCallback, onErrorCallback
       }
     )
-
-  },
-
-  upsertProductsToSalesdrive: () => {
-
-
   }
 }
 

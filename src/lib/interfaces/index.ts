@@ -24,6 +24,9 @@ export interface StockProduct {
 }
 
 export interface CrmProduct {
+  id_crm: string,
+  id_site: string,
+  mass: string,
   sku: string,
   stock: number,
   costPrice: number,
