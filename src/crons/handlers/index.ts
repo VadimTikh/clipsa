@@ -1,53 +1,38 @@
-import {IDatabase, SupplierApiImplementation} from "../../lib/interfaces";
-import {SuppliersApiAbstraction} from "../../lib/suppliers";
-import {DatabaseMongo} from "../../lib/databases";
+import saveToMongoUnifiedProducts from "./utils/saveToMongoUnifiedProducts";
+import {log} from "../../lib/log";
+import {SupplierApiImplementation} from "../../lib/interfaces";
+import {ErcApiImplementation} from "../../lib/suppliers";
 
-type SaveToMongoUnifiedProductsParams = {
-  suppliersToSave: SupplierApiImplementation[],
-  onSuccessCallback?: (supplierName: string) => void,
-  onErrorCallback?: (supplierName: string, reason: any) => void,
-}
-
-type UpsertProductsToSalesdriveParams = {
-
-}
+type UpsertProductsToSalesdriveParams = {}
 
 const handlers = {
 
-  saveToMongoUnifiedProducts: (
-    {
-      suppliersToSave,
-      onSuccessCallback = () => {
-      },
-      onErrorCallback = () => {
-      },
-    }: SaveToMongoUnifiedProductsParams
-  ): void => {
+  saveToMongoUnifiedProducts: () => {
 
-    const databaseMongo: IDatabase = new DatabaseMongo()
+    log.all('Cron job "Сохранить в БД актуальную информацию о товарах поставщиков" started');
 
-    const suppliersApiAbstraction = new SuppliersApiAbstraction(
-      suppliersToSave,
-      databaseMongo
+    const suppliersToSave: SupplierApiImplementation[] = [
+      new ErcApiImplementation()
+    ]
+
+    const onSuccessCallback = (supplierName: string) => {
+      log.all(
+        `Поставщик ${supplierName}: товары сохранены в БД!`
+      )
+    }
+
+    const onErrorCallback = (supplierName: string, reason: any) => {
+      log.all(
+        `Поставщик ${supplierName}: сохранение товаров в БД прервано из за ошибки:\n${reason}`
+      )
+    }
+
+    saveToMongoUnifiedProducts(
+      {
+        suppliersToSave, onSuccessCallback, onErrorCallback
+      }
     )
 
-    const suppliersPromises = suppliersApiAbstraction
-      .saveProductsToDb()
-
-    suppliersPromises
-      .forEach((supplierPromises, i) => {
-
-        const supplierName = suppliersToSave[i].getSupplierName()
-
-        supplierPromises
-          .then(() => {
-            onSuccessCallback(supplierName)
-          })
-          .catch((reason: any) => {
-            onErrorCallback(supplierName, reason)
-          })
-
-      })
   },
 
   upsertProductsToSalesdrive: () => {
