@@ -2,6 +2,16 @@ import {IDatabase, SupplierApiImplementation} from "../../lib/interfaces";
 import {SuppliersApiAbstraction} from "../../lib/suppliers";
 import {DatabaseMongo} from "../../lib/databases";
 
+type SaveToMongoUnifiedProductsParams = {
+  suppliersToSave: SupplierApiImplementation[],
+  onSuccessCallback?: (supplierName: string) => void,
+  onErrorCallback?: (supplierName: string, reason: any) => void,
+}
+
+type UpsertProductsToSalesdriveParams = {
+
+}
+
 const handlers = {
 
   saveToMongoUnifiedProducts: (
@@ -11,12 +21,7 @@ const handlers = {
       },
       onErrorCallback = () => {
       },
-    }:
-      {
-        suppliersToSave: SupplierApiImplementation[],
-        onSuccessCallback?: (supplierName: string) => void,
-        onErrorCallback?: (supplierName: string, reason: any) => void,
-      }
+    }: SaveToMongoUnifiedProductsParams
   ): void => {
 
     const databaseMongo: IDatabase = new DatabaseMongo()
@@ -43,6 +48,11 @@ const handlers = {
           })
 
       })
+  },
+
+  upsertProductsToSalesdrive: () => {
+
+
   }
 }
 

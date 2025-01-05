@@ -33,3 +33,9 @@ cron.schedule('0 */4 * * *', () => {
 
   log.all('Cron job "Сохранить в БД актуальную информацию о товарах поставщиков" started');
 });
+
+// Каждые 15 минут
+// Обновить товары в Salesdrive
+cron.schedule('0 */1 * * *', () => {
+  log.all('test cron every 1 h')
+})
