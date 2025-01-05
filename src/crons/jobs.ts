@@ -8,6 +8,8 @@ import {SupplierApiImplementation} from "../lib/interfaces";
 // Сохранить в БД актуальную информацию о товарах поставщиков
 cron.schedule('0 */4 * * *', () => {
 
+  log.all('Cron job "Сохранить в БД актуальную информацию о товарах поставщиков" started');
+
   const suppliersToSave: SupplierApiImplementation[] = [
     new ErcApiImplementation()
   ]
@@ -30,8 +32,6 @@ cron.schedule('0 */4 * * *', () => {
         suppliersToSave, onSuccessCallback, onErrorCallback
       }
     )
-
-  log.all('Cron job "Сохранить в БД актуальную информацию о товарах поставщиков" started');
 });
 
 // Каждые 15 минут
