@@ -1,4 +1,5 @@
 import saveToMongoUnifiedProducts from "./utils/saveToMongoUnifiedProducts";
+import upsertProductsToSalesDrive from "./utils/upsertProductsToSalesDrive";
 import {log} from "../../lib/log";
 import {SupplierApiImplementation} from "../../lib/interfaces";
 import {ErcApiImplementation} from "../../lib/suppliers";
@@ -30,6 +31,28 @@ const handlers = {
         suppliersToSave, onSuccessCallback, onErrorCallback
       }
     )
+  },
+
+  upsertProductsToSalesDrive: () => {
+
+    log.all('Cron job "Обновить и добавить товары в СРМ со склада" started');
+
+    const onSuccessCallback = () => {
+      log.all(
+        `Обновление и добавление товаров в СРМ со склада выполнено успешно!`
+      )
+    }
+
+    const onErrorCallback = (reason: any) => {
+      log.all(
+        `Обновление и добавление товаров в СРМ со склада прервано с ошибкой:\n${reason}`
+      )
+    }
+
+    upsertProductsToSalesDrive({
+      onSuccessCallback,
+      onErrorCallback
+    })
   }
 }
 

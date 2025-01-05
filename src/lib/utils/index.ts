@@ -1,15 +1,16 @@
 import {
   CrmProduct, DopNacenka, PriceRule, StockProduct, UnifiedProduct
 } from "../interfaces";
+import {WithId} from "mongodb";
 
 
 export const getBestAvailableUnifiedProduct = (
   {stockSku, unifiedProducts}:
     {
       stockSku: StockProduct['sku'],
-      unifiedProducts: UnifiedProduct[]
+      unifiedProducts: WithId<UnifiedProduct>[]
     }
-): UnifiedProduct | null => {
+): WithId<UnifiedProduct> | null => {
 
   const linkedUnifiedProducts = unifiedProducts
     .filter(unifiedProduct => (
@@ -140,4 +141,18 @@ export const getClipsaOldPrice = (sellPrice: number) => {
   const discountToSellPricePercent = 0.25
 
   return Math.ceil(sellPrice + sellPrice * discountToSellPricePercent)
+}
+
+export const createChunks = <T>(
+  {array, chunkSize}:
+    {
+      array: T[],
+      chunkSize: number
+    }
+) => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
 }

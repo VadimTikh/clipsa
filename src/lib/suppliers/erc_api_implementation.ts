@@ -65,19 +65,19 @@ class ErcApiImplementation implements SupplierApiImplementation {
         throw new Error(`ERC connectServiceProducts array is empty`)
       }
 
-      const wareRuProducts = await ercContentApi.getProductsRu()
+      const wareUkProducts = await ercContentApi.getProductsUk()
 
-      if (!wareRuProducts.length) {
-        throw new Error(`ERC wareRuProducts array is empty`)
+      if (!wareUkProducts.length) {
+        throw new Error(`ERC wareUkProducts array is empty`)
       }
 
       const currentDate = new Date()
 
       const parsedUnifiedProducts: UnifiedProduct[] = []
 
-      wareRuProducts.forEach((wareRuProduct) => {
+      wareUkProducts.forEach((wareUkProducts) => {
 
-        const sku = wareRuProduct?.sku[0]?.code
+        const sku = wareUkProducts?.sku[0]?.code
 
         if (!sku) return
 
@@ -100,15 +100,15 @@ class ErcApiImplementation implements SupplierApiImplementation {
 
         const isRrcRequired = this.getIsRrcRequired()
 
-        const title = wareRuProduct?.title ?? ''
+        const title = wareUkProducts?.title ?? ''
 
         const availability = foundConnectionServiceProduct?.stock ?? false
 
-        const link = wareRuProduct?.url || null
+        const link = wareUkProducts?.url || null
 
         const supplierName = this.getSupplierName()
 
-        const imgLink = wareRuProduct?.image || null
+        const imgLink = wareUkProducts?.image || null
 
         const rrcValue = foundConnectionServiceProduct?.RRP_UAH ?? 0
 

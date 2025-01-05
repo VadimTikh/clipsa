@@ -49,7 +49,7 @@ class ErcContentApi {
     }
   }
 
-  async getProductsRu(
+  async getProductsUk(
     limitPerRequest = 500,
     maxPages = Infinity,
     concurrency = 5
@@ -64,7 +64,7 @@ class ErcContentApi {
       const token = await this.getToken();
 
       const getRoute = (page: number) =>
-        `${this.routesV1.ware.ru}?limit=${limitPerRequest}&page=${page}`;
+        `${this.routesV1.ware.uk}?limit=${limitPerRequest}&page=${page}`;
 
       const options = {
         headers: {
