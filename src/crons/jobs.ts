@@ -8,6 +8,5 @@ console.log(handlers)
 cron.schedule('0 */4 * * *', () => handlers.saveToMongoUnifiedProducts());
 
 // Каждые 3 часа, но с задержкой 30 минут
-// Каждые 5 минут ТЕСТ
 // Обновить товары в Salesdrive
-cron.schedule('*/5 * * * *', () => handlers.upsertProductsToSalesDrive())
+cron.schedule('30 */3 * * *', () => handlers.upsertProductsToSalesDrive())
