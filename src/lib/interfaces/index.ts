@@ -1,6 +1,7 @@
 import {WithId} from "mongodb";
 
 export interface UnifiedProduct {
+  id: string,
   sku: string,
   title: string,
   cost_price_uah: number,

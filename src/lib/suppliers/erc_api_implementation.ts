@@ -112,7 +112,10 @@ class ErcApiImplementation implements SupplierApiImplementation {
 
         const rrcValue = foundConnectionServiceProduct?.RRP_UAH ?? 0
 
+        const id = String(wareUkProducts.id ?? '')
+
         parsedUnifiedProducts.push({
+          id,
           sku,
           title,
           availability,

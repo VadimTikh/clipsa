@@ -123,7 +123,8 @@ const handlers = {
             }
             const current_supplier = {
               supplier_name: bestAvailableUnifiedProduct?.supplier_name ?? '',
-              supplier_sku: bestAvailableUnifiedProduct?.sku ?? ''
+              supplier_sku: bestAvailableUnifiedProduct?.sku ?? '',
+              supplier_id: bestAvailableUnifiedProduct?.id ?? ''
             }
 
             products.push(
