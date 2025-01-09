@@ -20,6 +20,7 @@ class SuppliersApiAbstraction {
   ): boolean {
 
     const fieldsToCheck: (keyof UnifiedProduct)[] = [
+      'id',
       'title',
       'rrc_is_required',
       'rrc_value',
@@ -100,6 +101,7 @@ class SuppliersApiAbstraction {
         for (const product of productsChanged) {
 
           const updateFields: (keyof UnifiedProduct)[] = [
+            'id',
             'rrc_value',
             'title',
             'availability',
