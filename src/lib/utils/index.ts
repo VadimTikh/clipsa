@@ -3,6 +3,19 @@ import {
 } from "../interfaces";
 import {WithId} from "mongodb";
 
+export const getLinkedUnifiedProducts = (
+  {stockSku, unifiedProducts}:
+    {
+      stockSku: StockProduct['sku'],
+      unifiedProducts: WithId<UnifiedProduct>[]
+    }
+): WithId<UnifiedProduct>[] => {
+  return unifiedProducts
+    .filter(unifiedProduct => (
+      unifiedProduct.stock_info.status === 'linked' &&
+      unifiedProduct.stock_info.stock_sku === stockSku
+    ))
+}
 
 export const getBestAvailableUnifiedProduct = (
   {stockSku, unifiedProducts}:

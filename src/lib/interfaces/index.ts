@@ -44,10 +44,11 @@ export interface ContentProduct {
     availability: boolean, // Наличие на сайте
     hidden: boolean, // Видимость на сайте
   }
-  current_supplier: {
+  current_suppliers: {
     supplier_name: string, // Название поставщика
     supplier_sku: string, // Арт поставщика (для каждого поставщика будем оговаривать этот параметр)
-  }
+    supplier_id: string, // ID поставщика (для каждого поставщика будем оговаривать этот параметр)
+  }[]
 }
 
 export interface BafCalculatedProduct {

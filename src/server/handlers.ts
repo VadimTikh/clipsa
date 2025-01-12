@@ -8,7 +8,8 @@ import {
   getClipsaSellPrice,
   getClipsaAvailabilityAndCostPrice,
   getBestAvailableUnifiedProduct,
-  getClipsaOldPrice
+  getClipsaOldPrice,
+  getLinkedUnifiedProducts
 } from '../lib/utils'
 import {log} from "../lib/log";
 
@@ -89,10 +90,13 @@ const handlers = {
           .forEach(stockProduct => {
 
             const stockSku = stockProduct.sku
+            const linkedUnifiedProducts = getLinkedUnifiedProducts(
+              {unifiedProducts, stockSku}
+            )
             const bestAvailableUnifiedProduct = getBestAvailableUnifiedProduct(
               {
                 stockSku,
-                unifiedProducts
+                unifiedProducts: linkedUnifiedProducts
               }
             )
             const {availability, costPrice} = getClipsaAvailabilityAndCostPrice(
@@ -121,14 +125,15 @@ const handlers = {
               availability: availability,
               hidden: false,
             }
-            const current_supplier = {
-              supplier_name: bestAvailableUnifiedProduct?.supplier_name ?? '',
-              supplier_sku: bestAvailableUnifiedProduct?.sku ?? '',
-              supplier_id: bestAvailableUnifiedProduct?.id ?? ''
-            }
+            const current_suppliers = linkedUnifiedProducts
+              .map(linkedUnifiedProduct => ({
+                supplier_name: linkedUnifiedProduct?.supplier_name ?? '',
+                supplier_sku: linkedUnifiedProduct?.sku ?? '',
+                supplier_id: linkedUnifiedProduct?.id ?? ''
+              }))
 
             products.push(
-              {id, sku, title, cost_price, clipsa, current_supplier}
+              {id, sku, title, cost_price, clipsa, current_suppliers}
             )
           })
 
