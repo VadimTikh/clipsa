@@ -38,6 +38,8 @@ class YugcontractApi {
 
       if (!authToken) throw new Error('authToken не найден в ответе');
 
+      log.dev(`YugcontractApi fetched authToken`)
+
       return authToken;
 
     } catch (error) {
@@ -48,6 +50,7 @@ class YugcontractApi {
 
   }
 
+  // В 02:37 ночи почему-то массив продукт возвращался пустым
   public async getProductsPrice() {
     try {
       const authToken = await this.getAuthToken();
@@ -57,10 +60,12 @@ class YugcontractApi {
         'Authorization': `Bearer ${authToken}`
       }
       const body = {
-        lang: 'ua',
-        cats: [],
-        description_photo: 0
+        format: 'json',
+        type: 'regular',
+        type_prod: ['new'],
+        ext_cols: ["artikul", "url","photo"],
       }
+      log.dev(`YugcontractApi fetching priceProducts...`)
       const res = await axios.post<CatalogGetPriceResponse>(
         route,
         body,
@@ -70,7 +75,11 @@ class YugcontractApi {
       )
       const products = res.data?.content?.data?.rests?.product
 
-       if (!products || !products?.length) throw new Error('product массив не найден (либо он пустой) в ответе');
+      if (!products) throw new Error('product массив не найден в ответе');
+
+      if (!products?.length) throw new Error('product массив пустой в ответе');
+
+      log.dev(`YugcontractApi fetched priceProducts`)
 
       return products;
 

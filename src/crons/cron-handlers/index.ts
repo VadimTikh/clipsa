@@ -2,7 +2,7 @@ import saveToMongoUnifiedProducts from "./utils/saveToMongoUnifiedProducts";
 import upsertProductsToSalesDrive from "./utils/upsertProductsToSalesDrive";
 import {log} from "../../lib/log";
 import {SupplierApiImplementation} from "../../lib/interfaces";
-import {ErcApiImplementation} from "../../lib/suppliers";
+import {ErcApiImplementation, YugcontractApiImplementation} from "../../lib/suppliers";
 
 const handlers = {
 
@@ -11,6 +11,7 @@ const handlers = {
     log.all('Cron job "Сохранить в БД актуальную информацию о товарах поставщиков" started');
 
     const suppliersToSave: SupplierApiImplementation[] = [
+      new YugcontractApiImplementation(),
       new ErcApiImplementation()
     ]
 

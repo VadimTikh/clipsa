@@ -6,6 +6,52 @@ type BaseResponse<Content> = {
   content: Content;
 };
 
+export type PriceProduct = {
+  // Категорія
+  cat_top: string;
+  // Код Категорії
+  cat_2l: string;
+  // Група
+  cat: string;
+  // Підгрупа
+  cat_id: number;
+  // Код Підгрупи
+  cat_top_id: number;
+  // TM
+  brand: string;
+  // Код
+  id: string;
+  // Назва UA
+  name_ukr: string;
+  // Ціна, грн.
+  price: number;
+  // Ціна за пакування, грн.
+  price_scu: number;
+  // РРЦ, грн.
+  rrp: number;
+  // Контроль РРЦ, грн.
+  rrp_control: number;
+  // Статус наявності
+  // Значення: 0 - немає; 1 - в наявності; 2 - у резерві; 3 - очікується; 4 - під запит
+  status_main: number;
+  // Залишок на складі
+  qty_main: number;
+  // Статус наявності на складі Київ
+  // Значення: 0 - немає; 1 - в наявності; 2 - у резерві; 3 - очікується; 4 - під запит
+  status_region_1: string;
+  // Статус наявності на складі Київ
+  // Значення: 0 - немає; 1 - в наявності; 2 - у резерві; 3 - очікується; 4 - під запит
+  status_region_1_code: number;
+  // Залишок на складі Київ
+  qty_region_1: string;
+  // Артикул
+  artikul: string,
+  // Ссылка на товар
+  url: string,
+  // Фото
+  photo?: string
+}
+
 export type AuthGetAuthTokenResponse = BaseResponse<{
   authToken: string
 }>;
@@ -14,25 +60,7 @@ export type CatalogGetPriceResponse = BaseResponse<{
   data: {
     rests: {
       datetime: string,
-      product: {
-        cat_top: string;
-        cat_2l: string;
-        cat: string;
-        cat_id: number;
-        cat_top_id: number;
-        brand: string;
-        id: string;
-        name_ukr: string;
-        price: number;
-        price_scu: number;
-        rrp: number;
-        rrp_control: number;
-        status_main: string;
-        qty_main: string;
-        status_region_1: string;
-        status_region_1_code: number;
-        qty_region_1: string;
-      }[]
+      product: PriceProduct[]
     }
   }
 }>;

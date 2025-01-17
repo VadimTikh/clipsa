@@ -2,117 +2,83 @@ import {
   UnifiedProduct,
   SupplierApiImplementation
 } from "../interfaces";
-import {ErcContentApi, ErcConnectServiceApi} from './erc_api'
+import {YugcontractApi} from './yugcontract_api'
+import {PriceProduct} from './yugcontract_api/types'
 import {log} from '../log'
 
-class ErcApiImplementation implements SupplierApiImplementation {
+class YugcontractApiImplementation implements SupplierApiImplementation {
 
   public getSupplierName(): string {
-    return 'Erc';
+    return 'Yugcontract';
   }
 
-  private getIsRrcRequired() {
-    return true
+  private getIsRrcRequired(priceProduct: PriceProduct) {
+    if (priceProduct?.rrp_control) {
+      return priceProduct.rrp_control > 0
+    }
+    return false
   }
 
   public async getUnifiedProducts(): Promise<UnifiedProduct[]> {
 
     try {
 
-      // Here will be logic to fetch products from concrete (Erc) supplier
+      // Here will be logic to fetch products from concrete (Yugcontract) supplier
       // And format the products to the unified products type
 
       const {
-        ERC_CONTENT_API_USERNAME,
-        ERC_CONTENT_API_PASSWORD,
-        ERC_CONNECT_SERVICE_API_USERNAME,
-        ERC_CONNECT_SERVICE_API_PASSWORD,
+        YUGCONTRACT_API_USER_KEY,
+        YUGCONTRACT_API_SECRET
       } = process.env ?? {}
 
-      if (!ERC_CONTENT_API_USERNAME || !ERC_CONTENT_API_PASSWORD) {
-        throw new Error(`ERC_CONTENT_API login/password were not found`)
+      if (!YUGCONTRACT_API_USER_KEY || !YUGCONTRACT_API_SECRET) {
+        throw new Error(`YUGCONTRACT_API key/secret were not found`)
       }
 
-      if (!ERC_CONNECT_SERVICE_API_USERNAME || !ERC_CONNECT_SERVICE_API_PASSWORD) {
-        throw new Error(`ERC_CONNECT_SERVICE_API login/password were not found`)
-      }
-
-      const ercContentApi = new ErcContentApi(
-        ERC_CONTENT_API_USERNAME,
-        ERC_CONTENT_API_PASSWORD
+      const yugcontractApi = new YugcontractApi(
+        YUGCONTRACT_API_USER_KEY,
+        YUGCONTRACT_API_SECRET
       )
 
-      const ercConnectServiceApi = new ErcConnectServiceApi(
-        ERC_CONNECT_SERVICE_API_USERNAME,
-        ERC_CONNECT_SERVICE_API_PASSWORD
-      )
+      const priceProducts = await yugcontractApi.getProductsPrice()
 
-      const usdRates = await ercConnectServiceApi.getRates()
-
-      if (usdRates?.IsError) {
-        throw new Error(`ERC error fetching USD rates: response is ${JSON.stringify(usdRates)}`)
-      }
-
-      const usdRate = usdRates.paperwork
-
-      if (!usdRate) {
-        throw new Error(`ERC USD rate (paperwork) is not valid: ${usdRate}`)
-      }
-
-      const connectServiceProducts = await ercConnectServiceApi.getProducts()
-
-      if (!connectServiceProducts.length) {
-        throw new Error(`ERC connectServiceProducts array is empty`)
-      }
-
-      const wareUkProducts = await ercContentApi.getProductsUk()
-
-      if (!wareUkProducts.length) {
-        throw new Error(`ERC wareUkProducts array is empty`)
+      if (!priceProducts.length) {
+        throw new Error(`YUGCONTRACT priceProducts array is empty`)
       }
 
       const currentDate = new Date()
 
       const parsedUnifiedProducts: UnifiedProduct[] = []
 
-      wareUkProducts.forEach((wareUkProducts) => {
+      log.dev(`YugcontractApi formatting to unifiedProducts`)
 
-        const sku = wareUkProducts?.sku[0]?.code
+      priceProducts.forEach((priceProduct) => {
+
+        const sku = priceProduct?.artikul
 
         if (!sku) return
 
-        const foundConnectionServiceProduct = connectServiceProducts
-          .find(connectServiceProduct => (
-            sku === connectServiceProduct?.code
-          ))
-
-        if (!foundConnectionServiceProduct) return
-
-        const costPrice = foundConnectionServiceProduct?.sprice
+        const costPrice = priceProduct?.price
 
         if (!costPrice) return
 
-        const isCostPriceInUsd = foundConnectionServiceProduct.ddp === 0
+        const costPriceUah = costPrice
 
-        const costPriceUah = isCostPriceInUsd ?
-          Math.round(costPrice * usdRate) :
-          costPrice
+        const isRrcRequired = this.getIsRrcRequired(priceProduct)
 
-        const isRrcRequired = this.getIsRrcRequired()
+        const title = priceProduct?.name_ukr ?? ''
 
-        const title = wareUkProducts?.title ?? ''
+        const availability = priceProduct?.status_main === 1
 
-        const availability = foundConnectionServiceProduct?.stock ?? false
-
-        const link = wareUkProducts?.url || null
+        const link = priceProduct?.url || null
 
         const supplierName = this.getSupplierName()
 
-        const imgLink = wareUkProducts?.image || null
+        const imgLink = priceProduct?.photo || null
 
-        const rrcValue = foundConnectionServiceProduct?.RRP_UAH ?? 0
+        const rrcValue = priceProduct?.rrp_control ?? 0
 
-        const id = String(wareUkProducts.id ?? '')
+        const id = String(priceProduct.id ?? '')
 
         parsedUnifiedProducts.push({
           id,
@@ -133,6 +99,8 @@ class ErcApiImplementation implements SupplierApiImplementation {
         })
       })
 
+      log.dev(`YugcontractApi formatted to unifiedProducts`)
+
       return parsedUnifiedProducts
 
     } catch (error) {
@@ -149,4 +117,4 @@ class ErcApiImplementation implements SupplierApiImplementation {
   }
 }
 
-export {ErcApiImplementation}
+export {YugcontractApiImplementation}
