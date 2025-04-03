@@ -1,0 +1,25 @@
+stages:
+  - deploy
+
+deploy_to_vps:
+  stage: deploy
+  only:
+    - main
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H 185.69.155.141 >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh -o StrictHostKeyChecking=no root@185.69.155.141 << 'ENDSSH'
+        set -e
+        cd /root/Vadim/ProjectsNodejsVadim/clipsa
+        git pull origin-gitlab main
+
+        npm install
+        npm run build
+        pm2 reload Clipsa
+      ENDSSH
