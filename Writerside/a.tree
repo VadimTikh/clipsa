@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+  SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="a"
+                  name="App"
+                  start-page="starter-topic.md">
+
+  <toc-element topic="starter-topic.md"/>
+  <toc-element topic="Требования-тех-стек.md"/>
+  <toc-element topic="Установка-зависимостей.md"/>
+  <toc-element topic="Структура-проекта.md"/>
+  <toc-element topic="Классы-и-методы.md">
+    <toc-element topic="Main.md">
+      <toc-element topic="UserController.md"/>
+    </toc-element>
+    <toc-element topic="Service.md">
+      <toc-element topic="UserService.md">
+      </toc-element>
+    </toc-element>
+    <toc-element topic="Repository.md">
+      <toc-element topic="UserRepository.md"/>
+    </toc-element>
+  </toc-element>
+  <toc-element topic="API.md"/>
+  <toc-element topic="Поддержка-и-мониторинг.md"/>
+</instance-profile>

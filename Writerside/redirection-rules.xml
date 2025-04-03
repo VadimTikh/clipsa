@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rules SYSTEM "https://resources.jetbrains.com/writerside/1.0/redirection-rules.dtd">
+<rules>
+    <!-- format is as follows
+    <rule id="<unique id>">
+        <accepts>page.html</accepts>
+    </rule>
+    -->
+    <rule id="44dc79d6">
+        <description>Created after removal of "Empty MD Topic" from App</description>
+        <accepts>Empty-MD-Topic.html</accepts>
+    </rule>
+  <rule id="16109ec7">
+    <description>Created after removal of "Запуск в Docker" from App</description>
+    <accepts>Запуск-в-Docker.html</accepts>
+  </rule>
+</rules>
