@@ -44,8 +44,9 @@ class YugcontractApi {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(`Не удалось создать auth token для авторизации: ${errorMessage}`)
-      throw error
+      const fullError = `Не удалось создать auth token для авторизации: ${errorMessage}`
+      log.all(fullError)
+      throw fullError
     }
 
   }
@@ -85,8 +86,9 @@ class YugcontractApi {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(`Не удалось выгрузить прайс товаров: ${errorMessage}`)
-      throw error
+      const fullError = `Не удалось выгрузить прайс товаров: ${errorMessage}`
+      log.all(fullError)
+      throw fullError
     }
   }
 }

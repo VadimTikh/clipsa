@@ -37,14 +37,12 @@ class ErcConnectServiceApi {
 
       return response.data;
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `При запросе makeDoExportRequest с параметрами:\n` +
+      const fullError = `При запросе makeDoExportRequest с параметрами:\n` +
         `infotype: ${infotype}\n` +
         `возникла ошибка:\n${errorMessage}`
-      )
-      throw error
+      log.all(fullError)
+      throw fullError
     }
   }
 

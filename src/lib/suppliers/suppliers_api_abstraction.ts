@@ -132,16 +132,14 @@ class SuppliersApiAbstraction {
       ])
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `При формировании абстракцией списка на добавление и обновление в БД товаров с параметрами:\n` +
+      const fullError = `При формировании абстракцией списка на добавление и обновление в БД товаров с параметрами:\n` +
         `supplierName: ${supplierName}\n` +
         `productsFromApi: ${JSON.stringify(productsFromApi)}\n` +
         `database: ${JSON.stringify(database)}\n` +
         `возникла ошибка:\n${errorMessage}`
-      )
-      throw error
+      log.all(fullError)
+      throw fullError
     }
 
   }
@@ -185,13 +183,11 @@ class SuppliersApiAbstraction {
       return results
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `При фетчинге и сохранении абстракцией товаров в БД\n` +
+      const fullError = `При фетчинге и сохранении абстракцией товаров в БД\n` +
         `возникла ошибка:\n${errorMessage}`
-      )
-      throw error
+      log.all(fullError)
+      throw fullError
     }
   }
 }

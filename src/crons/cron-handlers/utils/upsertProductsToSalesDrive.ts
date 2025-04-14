@@ -1,6 +1,6 @@
 import {DatabaseMongo} from "../../../lib/databases";
 import {getBestAvailableUnifiedProduct, createChunks} from "../../../lib/utils";
-import {CrmProduct, StockProduct, UnifiedProduct} from "../../../lib/interfaces";
+import {CrmProduct, CronHandlerParams, StockProduct, UnifiedProduct} from "../../../lib/interfaces";
 import {SalesDriveApi} from "../../../lib/salesdrive/salesdrive_api";
 import {Product} from "../../../lib/salesdrive/types";
 import {log} from "../../../lib/log";
@@ -22,13 +22,6 @@ type GetProducts = () => Promise<{
   productsAddToCrm: ProductAddToCrm[],
   productsUpdateCostPriceInCrm: ProductUpdateCostPriceInCrm[]
 }>
-
-type UpsertProductsToSalesDrive = (
-  params: {
-    onSuccessCallback?: () => void,
-    onErrorCallback?: (reason: any) => void,
-  }
-) => void
 
 const getProducts: GetProducts = async () => {
 
@@ -78,8 +71,10 @@ const getProducts: GetProducts = async () => {
 
     return {productsAddToCrm, productsUpdateCostPriceInCrm}
   } catch (error) {
-    log.all(`Не удалось сгенерировать товары для добавления и обновления в Salesdrive`)
-    throw error
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const fullError = `Не удалось сгенерировать товары для добавления и обновления в Salesdrive: ${errorMessage}`
+    log.all(fullError)
+    throw fullError
   }
 }
 
@@ -113,8 +108,10 @@ const addProductsToCrm = async (products: ProductAddToCrm[]) => {
       log.dev(`Added products to Salesdrive batch response: ${JSON.stringify(response.data)}`)
     }
   } catch (error) {
-    log.all(`Не удалось добавить новые товары в Salesdrive`)
-    throw error
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const fullError = `Не удалось добавить новые товары в Salesdrive: ${errorMessage}`
+    log.all(fullError)
+    throw fullError
   }
 }
 
@@ -142,21 +139,22 @@ const updateCostPriceToCrm = async (products: ProductUpdateCostPriceInCrm[]) => 
       log.dev(`Updated products to Salesdrive batch response: ${JSON.stringify(response.data)}`)
     }
   } catch (error) {
-    log.all(`Не удалось обновить себестоимость товарам в Salesdrive`)
-    throw error
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const fullError = `Не удалось обновить себестоимость товарам в Salesdrive: ${errorMessage}`
+    log.all(fullError)
+    throw fullError
   }
 }
 
-const upsertProductsToSalesDrive: UpsertProductsToSalesDrive = async (
+const upsertProductsToSalesDrive = async (
   {
-    onSuccessCallback = () => {
-    },
-    onErrorCallback = () => {
-    }
-  }
+    onStartCallback,
+    onSuccessCallback,
+    onErrorCallback
+  }: CronHandlerParams
 ) => {
-
   try {
+    if (onStartCallback) onStartCallback()
 
     const {
       productsAddToCrm,
@@ -167,10 +165,11 @@ const upsertProductsToSalesDrive: UpsertProductsToSalesDrive = async (
 
     await updateCostPriceToCrm(productsUpdateCostPriceInCrm)
 
-    onSuccessCallback()
+    if (onSuccessCallback) onSuccessCallback()
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    onErrorCallback(errorMessage)
+    if (onErrorCallback) {
+      onErrorCallback(error instanceof Error ? error.message : 'Unknown error')
+    }
   }
 }
 

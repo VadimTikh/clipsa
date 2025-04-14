@@ -14,4 +14,24 @@
     <description>Created after removal of "Запуск в Docker" from App</description>
     <accepts>Запуск-в-Docker.html</accepts>
   </rule>
+    <rule id="55faf838">
+        <description>Created after removal of "UserRepository" from App</description>
+        <accepts>UserRepository.html</accepts>
+    </rule>
+    <rule id="73509c84">
+        <description>Created after removal of "Repository" from App</description>
+        <accepts>Repository.html</accepts>
+    </rule>
+  <rule id="44054a0d">
+    <description>Created after removal of "Токен" from App</description>
+    <accepts>Токен.html</accepts>
+  </rule>
+  <rule id="3df5723d">
+    <description>Created after removal of "API" from App</description>
+    <accepts>API.html</accepts>
+  </rule>
+  <rule id="23f5be3f">
+    <description>Created after removal of "Логи" from App</description>
+    <accepts>Поддержка-и-мониторинг.html</accepts>
+  </rule>
 </rules>

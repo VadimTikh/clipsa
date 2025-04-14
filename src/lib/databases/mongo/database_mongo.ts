@@ -43,14 +43,13 @@ class DatabaseMongo implements IDatabase {
     } catch (error) {
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `Получение из монго БД унифицированных товаров с параметрами: ${
-          options ? JSON.stringify(options) : 'без параметров'
-        } прервано с ошибкой:\n${
-          errorMessage
-        }`
-      )
-      throw error
+      const fullError = `Получение из монго БД унифицированных товаров с параметрами: ${
+        options ? JSON.stringify(options) : 'без параметров'
+      } прервано с ошибкой:\n${
+        errorMessage
+      }`
+      log.all(fullError)
+      throw fullError
     }
   }
 
@@ -96,14 +95,12 @@ class DatabaseMongo implements IDatabase {
       )
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `Обновление в монго БД товара: ${
-          JSON.stringify(product)
-        } прервано с ошибкой ${errorMessage}`
-      )
-      throw error
+      const fullError = `Обновление в монго БД товара: ${
+        JSON.stringify(product)
+      } прервано с ошибкой ${errorMessage}`
+      log.all(fullError)
+      throw fullError
     }
   }
 
@@ -126,14 +123,12 @@ class DatabaseMongo implements IDatabase {
       await collection.insertOne(product)
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `Добавление в монго БД товара: ${
-          JSON.stringify(product)
-        } прервано с ошибкой ${errorMessage}`
-      )
-      throw error
+      const fullError = `Добавление в монго БД товара: ${
+        JSON.stringify(product)
+      } прервано с ошибкой ${errorMessage}`
+      log.all(fullError)
+      throw fullError
     }
   }
 
@@ -174,14 +169,12 @@ class DatabaseMongo implements IDatabase {
       ]
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `Получение из монго БД товаров СРМ прервано с ошибкой:\n${
-          errorMessage
-        }`
-      )
-      throw error
+      const fullError = `Получение из монго БД товаров СРМ прервано с ошибкой:\n${
+        errorMessage
+      }`
+      log.all(fullError)
+      throw fullError
     }
 
   }
@@ -205,14 +198,12 @@ class DatabaseMongo implements IDatabase {
         .toArray()
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `Получение из монго БД товаров склада прервано с ошибкой:\n${
-          errorMessage
-        }`
-      )
-      throw error
+      const fullError = `Получение из монго БД товаров склада прервано с ошибкой:\n${
+        errorMessage
+      }`
+      log.all(fullError)
+      throw fullError
     }
   }
 
@@ -238,16 +229,14 @@ class DatabaseMongo implements IDatabase {
         .toArray()
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `Получение из монго БД правил цен с параметрами: ${
-          options ? JSON.stringify(options) : 'без параметров'
-        } прервано с ошибкой:\n${
-          errorMessage
-        }`
-      )
-      throw error
+      const fullError = `Получение из монго БД правил цен с параметрами: ${
+        options ? JSON.stringify(options) : 'без параметров'
+      } прервано с ошибкой:\n${
+        errorMessage
+      }`
+      log.all(fullError)
+      throw fullError
     }
   }
 
@@ -270,14 +259,12 @@ class DatabaseMongo implements IDatabase {
         .toArray()
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `Получение из монго БД доп наценок прервано с ошибкой:\n${
-          errorMessage
-        }`
-      )
-      throw error
+      const fullError = `Получение из монго БД доп наценок прервано с ошибкой:\n${
+        errorMessage
+      }`
+      log.all(fullError)
+      throw fullError
     }
   }
 
@@ -309,14 +296,12 @@ class DatabaseMongo implements IDatabase {
       )
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `Обновление в монго БД доп наценки: ${
-          JSON.stringify(dopNacenka)
-        } прервано с ошибкой ${errorMessage}`
-      )
-      throw error
+      const fullError = `Обновление в монго БД доп наценки: ${
+        JSON.stringify(dopNacenka)
+      } прервано с ошибкой ${errorMessage}`
+      log.all(fullError)
+      throw fullError
     }
   }
 }

@@ -40,12 +40,10 @@ class ErcContentApi {
 
       return data.token;
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `При запросе получения токена ErcContentApi возникла ошибка:\n${errorMessage}`
-      )
-      throw error
+      const fullError = `При запросе получения токена ErcContentApi возникла ошибка:\n${errorMessage}`
+      log.all(fullError)
+      throw fullError
     }
   }
 
@@ -118,16 +116,14 @@ class ErcContentApi {
       return products as ErcWareProduct[];
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `При запросе получения токена списка ру товаров ErcContentApi с параметрами:\n` +
+      const fullError = `При запросе получения токена списка ру товаров ErcContentApi с параметрами:\n` +
         `limitPerRequest: ${limitPerRequest}\n` +
         `maxPages: ${maxPages}\n` +
         `concurrency: ${concurrency}\n` +
         `возникла ошибка:\n${errorMessage}`
-      )
-      throw error
+      log.all(fullError)
+      throw fullError
     }
   }
 

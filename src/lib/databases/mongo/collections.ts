@@ -1,12 +1,13 @@
 import {MongoClient} from "mongodb";
 import {
-  UnifiedProduct, CrmProduct, StockProduct, PriceRule, DopNacenka
+  UnifiedProduct, CrmProduct, StockProduct, PriceRule, DopNacenka, JobLog
 } from '../../interfaces'
 
 const dbNames = {
   clipsa: 'Clipsa',
   clipsa_test: 'ClipsaTest',
-  salesdrive: 'salesdrive'
+  salesdrive: 'salesdrive',
+  logs: 'Logs',
 }
 
 const getCollections = (clipsaDbName: string) => ({
@@ -62,6 +63,15 @@ const getCollections = (clipsaDbName: string) => ({
       .collection<PriceRule>
       ('price-rules')
   ),
+
+  logs: {
+    cronJobs: (client: MongoClient) => (
+      client
+        .db(dbNames.logs)
+        .collection<JobLog>
+        ('cron_jobs')
+    )
+  }
 
 })
 

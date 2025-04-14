@@ -136,15 +136,13 @@ class ErcApiImplementation implements SupplierApiImplementation {
       return parsedUnifiedProducts
 
     } catch (error) {
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log.all(
-        `При фетчинге имплементацией списка товаров от поставщика ${
+      const fullError = `При фетчинге имплементацией списка товаров от поставщика ${
           this?.getSupplierName() ?? ''
         }\n` +
         `возникла ошибка:\n${errorMessage}`
-      )
-      throw error
+      log.all(fullError)
+      throw fullError
     }
   }
 }

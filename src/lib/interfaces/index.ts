@@ -110,3 +110,22 @@ export interface SupplierApiImplementation {
 
   getUnifiedProducts(): Promise<UnifiedProduct[]>;
 }
+
+export type JobLogStatus =
+  | { status: 'in_process' }
+  | { status: 'success', finishedAt?: Date, durationSeconds?: number }
+  | { status: 'error', finishedAt?: Date, durationSeconds?: number, reason: string };
+
+export type JobLog = {
+  name: string,
+  description: string,
+  startedAt: Date,
+  runLogs: string[],
+  status: JobLogStatus
+}
+
+export type CronHandlerParams = {
+  onStartCallback?: () => Promise<void>,
+  onSuccessCallback?: () => Promise<void>,
+  onErrorCallback?: (reason: any) => Promise<void>
+}
