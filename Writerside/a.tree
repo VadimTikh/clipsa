@@ -4,18 +4,18 @@
 
 <instance-profile id="a"
                   name="App"
-                  start-page="Описание проекта.md">
+                  start-page="project_description.md">
 
-  <toc-element topic="Описание проекта.md"/>
+  <toc-element topic="project_description.md"/>
   <toc-element topic="Требования-тех-стек.md"/>
   <toc-element topic="Установка-зависимостей.md"/>
   <toc-element topic="Структура-проекта.md"/>
-  <toc-element topic="Логика работы проекта.md">
-    <toc-element topic="Crons (Крон задачи).md">
-      <toc-element topic="Парсинг поставщиков.md"/>
-        <toc-element topic="Добавление и обновление товаров в СРМ.md"/>
+  <toc-element topic="project_logic.md">
+    <toc-element topic="cron_jobs.md">
+      <toc-element topic="pars_suppliers.md"/>
+        <toc-element topic="add_update_products_crm.md"/>
     </toc-element>
-    <toc-element topic="API сервер.md">
+    <toc-element topic="api_server.md">
       <toc-element topic="Аутентификация.md"/>
       <toc-element topic="Роуты.md"/>
     </toc-element>

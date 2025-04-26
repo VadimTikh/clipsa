@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 import {
   ContentProduct,
-  BafCalculatedProduct
+  BafCalculatedProduct, UnifiedProduct, CrmProduct
 } from '../lib/interfaces';
 import {DatabaseMongo} from '../lib/databases';
 import {
@@ -12,6 +12,7 @@ import {
   getLinkedUnifiedProducts
 } from '../lib/utils'
 import {log} from "../lib/log";
+import {WithId} from "mongodb";
 
 const database = new DatabaseMongo();
 
@@ -67,11 +68,7 @@ const handlers = {
       4. Правила наценки используются с техномикса (пока что хард-кодены в бд). Если вдруг не найдено правило наценки, будем использоваться дефолтная: 25%
      */
     products: async (req: Request, res: Response) => {
-
       try {
-
-        const products: ContentProduct[] = []
-
         const [
           stockProducts,
           unifiedProducts,
@@ -86,13 +83,32 @@ const handlers = {
           database.getDopNacenki()
         ])
 
-        stockProducts
-          .forEach(stockProduct => {
+        const linkedUnifiedProductsMap = (() => {
+          const unifiedMap = new Map<string, WithId<UnifiedProduct>[]>()
+          for (const u of unifiedProducts) {
+            if (u.stock_info.status === 'linked') {
+              const arr = unifiedMap.get(u.sku) || []
+              arr.push(u)
+              unifiedMap.set(u.sku, arr)
+            }
+          }
+          return unifiedMap
+        })()
+        const crmProductsMap = (() => {
+          const crmMap = new Map<string, WithId<CrmProduct>[]>()
+          for (const c of crmProducts) {
+            const arr = crmMap.get(c.sku) || []
+            arr.push(c)
+            crmMap.set(c.sku, arr)
+          }
+          return crmMap
+        })()
+
+        const products: ContentProduct[] = stockProducts
+          .map(stockProduct => {
 
             const stockSku = stockProduct.sku
-            const linkedUnifiedProducts = getLinkedUnifiedProducts(
-              {unifiedProducts, stockSku}
-            )
+            const linkedUnifiedProducts = linkedUnifiedProductsMap?.get(stockSku) ?? []
             const bestAvailableUnifiedProduct = getBestAvailableUnifiedProduct(
               {
                 stockSku,
@@ -103,7 +119,7 @@ const handlers = {
               {
                 stockSku,
                 bestAvailableUnifiedProduct,
-                crmProducts
+                crmProducts: crmProductsMap.get(stockSku) ?? []
               }
             )
             const sellPrice = getClipsaSellPrice(
@@ -132,9 +148,9 @@ const handlers = {
                 supplier_id: linkedUnifiedProduct?.id ?? ''
               }))
 
-            products.push(
-              {id, sku, title, cost_price, clipsa, current_suppliers}
-            )
+            return {
+              id, sku, title, cost_price, clipsa, current_suppliers
+            }
           })
 
         log.dev(
@@ -142,9 +158,7 @@ const handlers = {
         )
         res.status(200).json({data: products});
       } catch (error) {
-
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
         res.status(500).json({error: errorMessage});
       }
     },
