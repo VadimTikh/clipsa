@@ -13,7 +13,11 @@ class DatabaseMongo implements IDatabase {
   }
 
   async getUnifiedProducts(
-    options?: { supplierName?: string, info_status?: UnifiedProduct['stock_info']['status'] }
+    options?: {
+      supplierName?: string,
+      info_status?: UnifiedProduct['stock_info']['status'],
+      stock_sku?: string[]
+    }
   ): Promise<WithId<UnifiedProduct>[]> {
 
     try {
@@ -34,6 +38,10 @@ class DatabaseMongo implements IDatabase {
 
       if (options?.info_status) {
         filter["stock_info.status"] = options.info_status
+      }
+
+      if (options?.stock_sku) {
+        filter["stock_info.stock_sku"] = {$in: options.stock_sku}
       }
 
       return await collection

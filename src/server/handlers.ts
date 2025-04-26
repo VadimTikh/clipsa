@@ -87,9 +87,9 @@ const handlers = {
           const unifiedMap = new Map<string, WithId<UnifiedProduct>[]>()
           for (const u of unifiedProducts) {
             if (u.stock_info.status === 'linked') {
-              const arr = unifiedMap.get(u.sku) || []
+              const arr = unifiedMap.get(u.stock_info.stock_sku) || []
               arr.push(u)
-              unifiedMap.set(u.sku, arr)
+              unifiedMap.set(u.stock_info.stock_sku, arr)
             }
           }
           return unifiedMap
