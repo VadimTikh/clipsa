@@ -91,6 +91,10 @@ export interface IDatabase {
     updateFields: (keyof UnifiedProduct)[]
   ): Promise<void>;
 
+  makeSupplierProductsUnavailable(
+    supplierName: string
+  ): Promise<number>;
+
   getCrmProducts(): Promise<WithId<CrmProduct>[]>
 
   getStockProducts(): Promise<WithId<StockProduct>[]>

@@ -112,6 +112,42 @@ class DatabaseMongo implements IDatabase {
     }
   }
 
+  async makeSupplierProductsUnavailable(
+    supplierName: string
+  ): Promise<number> {
+
+    try {
+
+      log.dev(`Making all ${supplierName} unified products unavailable...`)
+
+      const client = await this.getClient()
+
+      const collection = collections
+        .products
+        .unified(client)
+
+      const result = await collection.updateMany(
+        {
+          supplier_name: supplierName,
+          availability: true
+        },
+        {
+          $set: {availability: false}
+        }
+      )
+
+      return result.modifiedCount
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const fullError = `Перевод в "Нет в наличии" товаров поставщика ${
+        supplierName
+      } прерван с ошибкой:\n${errorMessage}`
+      log.all(fullError)
+      throw fullError
+    }
+  }
+
   async insertUnifiedProduct(product: UnifiedProduct): Promise<void> {
 
     try {

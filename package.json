@@ -15,6 +15,7 @@
   },
   "scripts": {
     "lint": "gts lint",
+    "test": "node --require ts-node/register --test test/*.test.ts",
     "clean": "gts clean",
     "dev": "nodemon",
     "dev_test": "nodemon --config nodemon-test.json",

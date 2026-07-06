@@ -166,13 +166,51 @@ class SuppliersApiAbstraction {
 
         const save = async () => {
 
-          const productsFromApi = await supplierApi.getUnifiedProducts();
+          try {
 
-          await this.productsFromApiHandler({
-            supplierName,
-            productsFromApi,
-            database,
-          });
+            const productsFromApi = await supplierApi.getUnifiedProducts();
+
+            await this.productsFromApiHandler({
+              supplierName,
+              productsFromApi,
+              database,
+            });
+
+          } catch (error) {
+
+            // Синхронизация не удалась: данные поставщика в БД устарели,
+            // поэтому переводим все его товары в "Нет в наличии".
+            // Следующая успешная синхронизация вернёт актуальное наличие.
+            const originalMessage = error instanceof Error ?
+              error.message :
+              String(error);
+
+            let zeroingNote: string
+
+            try {
+
+              const modifiedCount = await database
+                .makeSupplierProductsUnavailable(supplierName)
+
+              zeroingNote = `Все товары поставщика (${
+                modifiedCount
+              } шт.) переведены в "Нет в наличии"`
+
+            } catch (zeroingError) {
+
+              const zeroingMessage = zeroingError instanceof Error ?
+                zeroingError.message :
+                String(zeroingError);
+
+              zeroingNote = `НЕ удалось перевести товары поставщика в "Нет в наличии": ${
+                zeroingMessage
+              }`
+            }
+
+            const fullError = `${originalMessage}\n${zeroingNote}`
+            log.all(fullError)
+            throw fullError
+          }
         }
 
         const result = save()
